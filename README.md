@@ -1,5 +1,5 @@
 # CLI Agent (DEVELOPMENT)
-An interactive terminal agent/companion wrapper built with Python and `rich` for my personal use.
+An interactive terminal agent/companion wrapper built with Python and `rich` for a school project and my personal use.
 
 ---
 
