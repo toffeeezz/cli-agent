@@ -1,4 +1,4 @@
-# CLI Agent (BETA)
+# CLI Agent (DEVELOPMENT)
 An interactive terminal agent/companion wrapper built with Python and `rich` for my personal use.
 
 ---
@@ -9,6 +9,7 @@ An interactive terminal agent/companion wrapper built with Python and `rich` for
 * **Multi-line Mode**: Allows for parsing long paragraphs or deep blocks of code seamlessly
 
 ## Upcoming Features & Short-Term Goals
+* **Agentic AI**: Allow for the LLM model to behave like a standard agent
 * **Skills Plugins**: Allow for the agent to utilize skills on-demand
 * **Tools Plugins**: Allow for the agent to call tools on-demand
 * **Persona**: Allow for the agent to role-play a persona which is modifiable at-runtime
