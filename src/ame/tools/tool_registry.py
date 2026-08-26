@@ -1,6 +1,7 @@
-from collections.abc import Callable
 import inspect
+from collections.abc import Callable
 from typing import ParamSpec, TypeVar, final, get_type_hints
+
 from openai.types.chat import ChatCompletionToolUnionParam
 from pydantic import BaseModel, TypeAdapter
 
@@ -10,11 +11,6 @@ from ame.errors import ProgramError
 class Tool(BaseModel):
     invoke: Callable[..., tuple[bool, object]]
     tool_schema: ChatCompletionToolUnionParam
-
-
-class ToolRequest(BaseModel):
-    tool: Tool
-    require_confirmation: bool
 
 
 P = ParamSpec("P")
@@ -120,4 +116,4 @@ class ToolRegistry:
             raise ToolError(name, f"Execution of tool '{name}' failed: {e}") from e
 
 
-registry = ToolRegistry()
+tool_registry = ToolRegistry()
