@@ -1,21 +1,34 @@
-from typing import Literal
+import asyncio
+from typing import Literal, cast
 
 from rich.table import Table
 
-from ame.cli.commands.command_registry import registry
+from ame.cli.commands.command_registry import command_registry
 from ame.cli.renderer import console, render_hidden_prompt, render_multiline_prompt
 from ame.settings.settings import get_settings
 from ame.utils import logger
+from ame.tools.tool_registry import tool_registry
 
 
 class ExitCLI(Exception):
     """Raise to exit the program"""
 
 
-@registry.register("/help")
+@command_registry.register(flag="/tool", dev_command=True)
+async def execute_tool(name: str, *raw_pairs: str) -> None:
+    """Directly invokes a registered tool by name using key=value args."""
+    kwargs = cast(
+        dict[str, object],
+        dict(pair.split(sep="=", maxsplit=1) for pair in raw_pairs),
+    )
+    _, msg = await tool_registry.execute(name=name, kwargs=kwargs)
+    console.print(f"[bold yellow] \\[Tool Message]: {msg}")
+
+
+@command_registry.register("/help")
 def print_help() -> None:
     """displays a table containing a list of all commands"""
-    command_list = registry.command_list
+    command_list = command_registry.command_list
     table = Table(show_header=True, header_style="bold", padding=(0, 4), leading=1)
     table.add_column("Command", style="italic orange3", justify="center")
     table.add_column("Required Args", style="bold", justify="center")
@@ -37,13 +50,13 @@ def print_help() -> None:
     console.print("[bold yellow]IMPORTANT: Arguments must be entered in order")
 
 
-@registry.register("/exit")
+@command_registry.register("/exit")
 def exit() -> None:
     """exits the program"""
     raise ExitCLI
 
 
-@registry.register("/env", True)
+@command_registry.register("/env")
 def display_settings() -> None:
     """displays the environment variables"""
     settings = get_settings()
@@ -60,33 +73,33 @@ def display_settings() -> None:
     console.print(table)
 
 
-@registry.register("/clear")
+@command_registry.register("/clear")
 def clear_console() -> None:
     """clears the terminal output"""
     console.clear()
 
 
-@registry.register("/multi_line")
+@command_registry.register("/multi_line")
 def enter_multi_line_edit() -> str:
     """enters a mode allowing pasting of long multi-line paragraphs or code"""
     return render_multiline_prompt()
 
 
-@registry.register("/model")
+@command_registry.register("/model")
 def select_model(model_name: str):
     """see all avaialable models by your service provider"""
     settings = get_settings()
     settings.llm_model = model_name
 
 
-@registry.register("/api_url")
+@command_registry.register("/api_url")
 def select_url(api_url: str) -> None:
     """the url endpoint of your service provider"""
     settings = get_settings()
     settings.api_url = api_url
 
 
-@registry.register("/api_key")
+@command_registry.register("/api_key")
 def select_key() -> None:
     """the api key from your service provider"""
     api_key = render_hidden_prompt()
@@ -94,7 +107,7 @@ def select_key() -> None:
     settings.api_key = api_key
 
 
-@registry.register("/logging")
+@command_registry.register("/logging")
 def show_logs(level: Literal["none", "warning", "debug", "info"]) -> None:
     settings = get_settings()
     settings.console_logging = level
