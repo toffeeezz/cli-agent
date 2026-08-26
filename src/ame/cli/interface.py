@@ -1,6 +1,6 @@
 import readline
 
-from ame.cli.commands.command_registry import registry
+from ame.cli.commands.command_registry import command_registry
 from ame.cli.commands.handler import *
 from ame.cli.renderer import console, render_user_prompt
 from ame.errors import ProgramError
@@ -10,7 +10,7 @@ def command_completer():
     """Dynamically creates a completion function based on your registered commands."""
 
     def completer(text: str, state: int) -> str | None:
-        options = [cmd for cmd in registry.command_list]
+        options = [cmd for cmd in command_registry.command_list]
         matches = [opt for opt in options if opt.startswith(text)]
 
         if state < len(matches):
@@ -52,15 +52,15 @@ async def run_cli() -> None:
                 flag = parts[0]
                 command_args = parts[1:]
 
-                if flag not in registry.command_list:
+                if flag not in command_registry.command_list:
                     console.print(
                         f"[bold red]Unknown command: {flag}. Type /help[/bold red]"
                     )
                     continue
 
-                command_info = registry.command_list[flag]
+                command_info = command_registry.command_list[flag]
 
-                result = registry.execute(flag, *command_args)
+                result = await command_registry.execute(flag, *command_args)
 
                 if flag == "/multi_line" and isinstance(result, str) and result:
                     # Split lines up to allow editing/accumulation in the buffer seamlessly
