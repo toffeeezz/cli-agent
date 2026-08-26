@@ -1,8 +1,11 @@
+from typing import Literal
+
 from rich.table import Table
 
 from ame.cli.commands.command_registry import registry
 from ame.cli.renderer import console, render_hidden_prompt, render_multiline_prompt
 from ame.settings.settings import get_settings
+from ame.utils import logger
 
 
 class ExitCLI(Exception):
@@ -20,6 +23,8 @@ def print_help() -> None:
     table.add_column("Description", style="green", justify="left")
 
     for command in command_list.values():
+        if command.dev_command and not get_settings().dev_mode:
+            continue
         table.add_row(
             command.flag,
             f"{', '.join(arg.lower() for arg in command.required_args)}",
@@ -38,7 +43,7 @@ def exit() -> None:
     raise ExitCLI
 
 
-@registry.register("/env")
+@registry.register("/env", True)
 def display_settings() -> None:
     """displays the environment variables"""
     settings = get_settings()
@@ -87,3 +92,10 @@ def select_key() -> None:
     api_key = render_hidden_prompt()
     settings = get_settings()
     settings.api_key = api_key
+
+
+@registry.register("/logging")
+def show_logs(level: Literal["none", "warning", "debug", "info"]) -> None:
+    settings = get_settings()
+    settings.console_logging = level
+    logger.set_console_level(level)
