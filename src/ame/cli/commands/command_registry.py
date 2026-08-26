@@ -5,6 +5,7 @@ from typing import ParamSpec, TypeVar, final
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from ame.errors import ProgramError
+from ame.settings.settings import get_settings
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -88,7 +89,7 @@ class CommandRegistry:
     def execute(self, flag: str, *args: object) -> object:
         command = self.command_list.get(flag)
 
-        if not command:
+        if not command or (command.dev_command and not get_settings().dev_mode):
             raise CommandNotFoundError(flag)
 
         sig = inspect.signature(command.invoke)
