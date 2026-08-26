@@ -1,6 +1,6 @@
 import inspect
 from collections.abc import Callable
-from typing import ParamSpec, TypeVar, final
+from typing import ParamSpec, TypeVar, cast, final
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -86,17 +86,12 @@ class CommandRegistry:
 
         return decorator
 
-    def execute(self, flag: str, *args: object) -> object:
+    async def execute(self, flag: str, *args: object) -> object:
         command = self.command_list.get(flag)
-
         if not command or (command.dev_command and not get_settings().dev_mode):
             raise CommandNotFoundError(flag)
 
         sig = inspect.signature(command.invoke)
-
-        # Check for extra arguments immediately before binding maps them
-        if len(args) > len(sig.parameters):
-            raise CommandNumArgsError(command, provided_count=len(args))
 
         bound_args = sig.bind_partial(*args)
         merged_kwargs = bound_args.arguments
@@ -107,7 +102,6 @@ class CommandRegistry:
         if missing_required:
             raise CommandNumArgsError(command, provided_count=len(args))
 
-        # Fill default args
         for name, param in sig.parameters.items():
             if (
                 name not in merged_kwargs
@@ -115,25 +109,46 @@ class CommandRegistry:
             ):
                 merged_kwargs[name] = param.default
 
-        # Check valid arg types
-        validated_kwargs = {}
+        validated_kwargs: dict[str, object] = {}
         try:
             for name, param in sig.parameters.items():
                 if name in merged_kwargs:
                     value = merged_kwargs[name]
                     if (
-                        param.annotation is not inspect.Parameter.empty
-                        and param.annotation is not object
+                        param.annotation is inspect.Parameter.empty
+                        or param.annotation is object
                     ):
+                        validated_kwargs[name] = value
+                    elif param.kind is inspect.Parameter.VAR_POSITIONAL:
+                        adapter = TypeAdapter(param.annotation)
+                        validated_kwargs[name] = tuple(
+                            adapter.validate_python(item) for item in value
+                        )
+                    else:
                         adapter = TypeAdapter(param.annotation)
                         validated_kwargs[name] = adapter.validate_python(value)
-                    else:
-                        validated_kwargs[name] = value
-
         except ValidationError as e:
             raise CommandArgsTypeError(flag, f"{e}") from e
 
-        return command.invoke(**validated_kwargs)
+        call_args: list[object] = []
+        call_kwargs: dict[str, object] = {}
+        for name, param in sig.parameters.items():
+            if name not in validated_kwargs:
+                continue
+            if param.kind in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            ):
+                call_args.append(validated_kwargs[name])
+            elif param.kind is inspect.Parameter.VAR_POSITIONAL:
+                call_args.extend(cast(tuple[object, ...], validated_kwargs[name]))
+            else:
+                call_kwargs[name] = validated_kwargs[name]
+
+        result = command.invoke(*call_args, **call_kwargs)
+        if inspect.isawaitable(result):
+            return await result
+        return result
 
 
-registry = CommandRegistry()
+command_registry = CommandRegistry()
