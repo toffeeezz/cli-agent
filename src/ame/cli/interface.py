@@ -1,7 +1,7 @@
 import readline
 
-from ame.cli.commands.handler import *
 from ame.cli.commands.command_registry import registry
+from ame.cli.commands.handler import *
 from ame.cli.renderer import console, render_user_prompt
 from ame.errors import ProgramError
 
