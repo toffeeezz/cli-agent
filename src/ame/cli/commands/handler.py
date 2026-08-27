@@ -2,8 +2,14 @@ from typing import Literal, cast
 
 from rich.table import Table
 
+from ame.agent.agent import Agent
 from ame.cli.commands.command_registry import command_registry
-from ame.cli.renderer import console, render_hidden_prompt, render_multiline_prompt
+from ame.cli.renderer import (
+    console,
+    render_agent_text,
+    render_hidden_prompt,
+    render_multiline_prompt,
+)
 from ame.settings.settings import get_settings
 from ame.tools.tool_registry import tool_registry
 from ame.utils import logger
@@ -78,7 +84,7 @@ def clear_console() -> None:
     console.clear()
 
 
-@command_registry.register("/multi_line")
+@command_registry.register("/multi_line_mode")
 def enter_multi_line_edit() -> str:
     """enters a mode allowing pasting of long multi-line paragraphs or code"""
     return render_multiline_prompt()
