@@ -3,9 +3,9 @@ name = "cli-agent"
 version = "0.1.0"
 description = "A tool-calling LLM agent with the personality of Ame-chan from NSO."
 readme = "README.md"
-requires-python  = ">=3.11"
-license = { text = "MIT"}
-authors = [{ name = "toffeezzz"}]
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "toffeezzz" }]
 dependencies = [
   "openai",
   "rich",
@@ -13,7 +13,8 @@ dependencies = [
   "pydantic-settings",
   "send2trash",
   "python-dotenv",
-  "prompt-toolkit"
+  "prompt-toolkit",
+  "pyqt6",
 ]
 
 [tool.setuptools.packages.find]
@@ -25,4 +26,3 @@ cli-agent = "ame.__main__:main"
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-
