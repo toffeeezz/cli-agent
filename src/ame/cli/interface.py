@@ -32,6 +32,9 @@ async def run_cli() -> None:
         "[bold green]\nCLI Session Initialized.[/bold green] Type [cyan]/help[/cyan] for commands."
     )
 
+    if get_settings().dev_mode:
+        console.print("[bold yellow]Currently running in dev mode")
+
     while True:
         try:
             # Adapt prompt visually if there is text waiting in the buffer
