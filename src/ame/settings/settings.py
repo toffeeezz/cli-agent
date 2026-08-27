@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     api_url: str = "https://openrouter.ai/api/v1"
     api_key: str = ""
     llm_model: str = "deepseek/deepseek-v4-flash"
+    llm_system_prompt: Path = PROJECT_ROOT / "DEFAULT_SYSTEM_PROMPT.md"
 
     max_agent_loops: int = 20
 
