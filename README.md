@@ -16,6 +16,7 @@ An interactive terminal agent/companion wrapper built with Python and `rich` for
 * **Memory Recall**: Allow for the agent to recall contextually relevant memories
 * **Guard Rails**: Require the agent to request a confirmation from the user when doing tasks like deleting data, etc.
 * **Long Term Memory Storage**: Allow for the agent to store memories that are scored by importance and significance
+* **Graphical Window Interface**: A GUI window made from PyQt. Apparently this is required for our project so here we are
 
 ## Experimental Ideas & Future Pipeline
 * **Personality Development**: Allow for the agent to simulate the evolution of a personality using the stored memories. The only feature in this category that might have a better chance of being implemented in the far-future
