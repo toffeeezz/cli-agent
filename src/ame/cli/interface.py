@@ -1,9 +1,16 @@
 import readline
 
+from ame.agent.agent import agent
 from ame.cli.commands.command_registry import command_registry
-from ame.cli.commands.handler import *
-from ame.cli.renderer import console, render_user_prompt
+from ame.cli.commands.handler import ExitCLI
+from ame.cli.renderer import (
+    console,
+    render_agent_text,
+    render_thinking_spinner,
+    render_user_prompt,
+)
 from ame.errors import ProgramError
+from ame.settings.settings import get_settings
 
 
 def command_completer():
@@ -37,7 +44,6 @@ async def run_cli() -> None:
 
     while True:
         try:
-            # Adapt prompt visually if there is text waiting in the buffer
             if text_buffer:
                 prompt_prefix = f"[dim]({len(text_buffer)} lines buffered)[/dim] "
                 console.print(prompt_prefix, end="")
@@ -46,10 +52,12 @@ async def run_cli() -> None:
             if not user_input:
                 if text_buffer:
                     full_payload = "\n".join(text_buffer)
+                    with render_thinking_spinner():
+                        async for chunk in agent.get_reply(full_payload):
+                            render_agent_text(chunk)
                     text_buffer.clear()
                 continue
 
-            # COMMAND TRACKING BLOCK
             if user_input.startswith("/"):
                 parts = user_input.split()
                 flag = parts[0]
@@ -61,25 +69,26 @@ async def run_cli() -> None:
                     )
                     continue
 
-                command_info = command_registry.command_list[flag]
-
                 result = await command_registry.execute(flag, *command_args)
 
-                if flag == "/multi_line" and isinstance(result, str) and result:
-                    # Split lines up to allow editing/accumulation in the buffer seamlessly
+                if flag == "/multi_line_mode" and isinstance(result, str) and result:
                     text_buffer.extend(result.splitlines())
                     console.print(
                         "[dim italic]💡 Tip: Press Enter on an empty line to submit your buffer, or type more text.[/dim italic]"
                     )
 
-                continue  # Skip agent execution to stay in the prompt loop
+                continue
 
-            # CHAT MODE TRACKING BLOCK
             if text_buffer:
                 text_buffer.append(user_input)
                 console.print(
                     f"[dim]Line added to buffer ({len(text_buffer)} total). Press Enter on a blank line to send.[/dim]"
                 )
+                continue
+
+            with render_thinking_spinner():
+                async for chunk in agent.get_reply(user_input):
+                    render_agent_text(chunk)
 
         except ExitCLI:
             console.print("\n[bold red]Terminating session. Goodbye![/bold red]")
@@ -92,3 +101,4 @@ async def run_cli() -> None:
                 console.print("\n[yellow]Workspace buffer flushed clean.[/yellow]")
             else:
                 console.print("\n[yellow]Use /exit to shut down safely.[/yellow]")
+
