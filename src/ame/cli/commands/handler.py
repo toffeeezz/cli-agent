@@ -1,4 +1,3 @@
-import asyncio
 from typing import Literal, cast
 
 from rich.table import Table
@@ -6,8 +5,8 @@ from rich.table import Table
 from ame.cli.commands.command_registry import command_registry
 from ame.cli.renderer import console, render_hidden_prompt, render_multiline_prompt
 from ame.settings.settings import get_settings
-from ame.utils import logger
 from ame.tools.tool_registry import tool_registry
+from ame.utils import logger
 
 
 class ExitCLI(Exception):
@@ -22,7 +21,7 @@ async def execute_tool(name: str, *raw_pairs: str) -> None:
         dict(pair.split(sep="=", maxsplit=1) for pair in raw_pairs),
     )
     _, msg = await tool_registry.execute(name=name, kwargs=kwargs)
-    console.print(f"[bold yellow] \\[Tool Message]: {msg}")
+    console.print(f"[bold green] \\[Tool Message]: {msg}")
 
 
 @command_registry.register("/help")
