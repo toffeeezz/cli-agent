@@ -1,6 +1,6 @@
 # CLI Agent (DEVELOPMENT)
 
-An interactive terminal agent/companion wrapper built with Python and `rich`.
+An interactive terminal agent/companion wrapper built with Python and `rich` for a school project and my personal use.
 
 ---
 
@@ -21,17 +21,17 @@ An interactive terminal agent/companion wrapper built with Python and `rich`.
 - **Persona** — Runtime-modifiable role-play persona
 - **Memory Recall** — Contextually relevant memory recall
 - **Long-Term Memory Storage** — Importance-scored memory retention
-- **Graphical Window Interface** — PyQt-based GUI (project requirement)
+- **Graphical Window Interface** — A PyQt-based GUI. Apparently this is required for the project so here we are
 
 ## 💡 Experimental Ideas
 
-- **Personality Development** — Simulate personality evolution through stored memories
-- **Hyprland / Quickshell Integration** — Maybe, if I don't get bored
+- **Personality Development** — Simulate personality evolution through stored memories. This is the only feature in this category that might actually happen in the far future
+- **Hyprland / Quickshell Integration** — Might implement this one if I don't get bored. Although highly unlikely.
 
 ---
 
-## ⚠️ Limitations
+## ⚠️ Limitations (MUST READ!!)
 
-> **Personal use only.** This project is intended for people who understand the risks of letting an AI agent operate freely in their system. Don't use it if you don't.
+> **INTENDED FOR PERSONAL USE!!** This project is intended for people who know what they're doing. Don't use it if you lack the knowledge of the dangers of letting an AI agent run freely in your system.
 
-> **No path sandboxing.** The agent can read, write, and delete from any accessible path. There are no guardrails beyond the deletion confirmation check.
+> **NO PATH SANDBOXING!!** The agent does not have any clear sandboxing or safety guardrails so it may peek inside paths that shouldn't be allowed. The only protection is the deletion confirmation check, and that's not enough to call it safe.
