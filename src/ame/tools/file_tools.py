@@ -146,5 +146,5 @@ def delete_file_or_dir(path: str, confirm: bool | None = None) -> tuple[bool, st
         send2trash.send2trash(path)
     except OSError as e:
         return False, f"Failed to move '{path}' to trash: {e}"
-    logger.warning("DESTRUCTIVE ACTION: deleted '%s'", path)
+    logger.warning("[bold yellow]DESTRUCTIVE ACTION: deleted '%s'", path)
     return True, f"{path} was thrown into recycle bin"
