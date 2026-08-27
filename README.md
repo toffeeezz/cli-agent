@@ -1,31 +1,37 @@
 # CLI Agent (DEVELOPMENT)
-An interactive terminal agent/companion wrapper built with Python and `rich` for a school project and my personal use.
+
+An interactive terminal agent/companion wrapper built with Python and `rich`.
 
 ---
 
-## Implemented Features
-* **Terminal History & Tab Completion**: Full support for arrow-key command history and Tab-based auto-suggestions for all internal commands
-* **Command Tools**: Built-in internal commands to allow at-runtime modifications of environment variables, model and service switching, etc.
-* **Multi-line Mode**: Allows for parsing long paragraphs or deep blocks of code seamlessly
-* **Agentic AI**: Allow for the LLM model to behave like a standard agent
-* **Tools Plugins**: Allow for the agent to call tools on-demand. Current tools include:
+## ✨ Implemented Features
+
+- **Terminal History & Tab Completion** — Full arrow-key command history and Tab-based auto-suggestions for all internal commands
+- **Command Tools** — At-runtime modification of environment variables, model/service switching, etc.
+- **Multi-line Mode** — Seamless parsing of long paragraphs or deep blocks of code
+- **Agentic AI** — The LLM behaves like a standard agent, capable of using tools autonomously
+- **Tool System** — On-demand tool calling. Currently includes:
   - **File Tools**: `read_file`, `write_file`, `list_dir` — read, create, and explore files and directories
   - **Git Tools**: `git_status`, `git_add`, `git_commit` — check repo status, stage files, and commit changes
+- **Guard Rail (Partial)** — The agent asks for confirmation before destructive actions (e.g., deleting files). ⚠️ **Not a complete safety solution** — the rest of the system still lacks sandboxing, so proceed with caution.
 
-## Upcoming Features & Short-Term Goals
-* **Skills Plugins**: Allow for the agent to utilize skills on-demand
-* **Persona**: Allow for the agent to role-play a persona which is modifiable at-runtime
-* **Memory Recall**: Allow for the agent to recall contextually relevant memories
-* **Guard Rails**: Require the agent to request a confirmation from the user when doing tasks like deleting data, etc.
-* **Long Term Memory Storage**: Allow for the agent to store memories that are scored by importance and significance
-* **Graphical Window Interface**: A GUI window made from PyQt. Apparently this is required for our project so here we are
+## 📋 Upcoming Features
 
-## Experimental Ideas & Future Pipeline
-* **Personality Development**: Allow for the agent to simulate the evolution of a personality using the stored memories. The only feature in this category that might have a better chance of being implemented in the far-future
-* **Integration for Hyprland/Quickshell setup**: Might implement this one if I don't get bored. Although highly-unlikely
+- **Skills Plugins** — Allow the agent to utilize skills on-demand
+- **Persona** — Runtime-modifiable role-play persona
+- **Memory Recall** — Contextually relevant memory recall
+- **Long-Term Memory Storage** — Importance-scored memory retention
+- **Graphical Window Interface** — PyQt-based GUI (project requirement)
+
+## 💡 Experimental Ideas
+
+- **Personality Development** — Simulate personality evolution through stored memories
+- **Hyprland / Quickshell Integration** — Maybe, if I don't get bored
 
 ---
 
-## Limitations (MUST READ!!)
-* **INTENDED FOR PERSONAL USE!!**: This project is intended for personal use only and for people who know what they are doing. It shouldn't be used by anyone who lacks the knowledge of the dangers of letting an AI agent run freely in your system
-* **NO PATH SANDBOXING!!**: The agent does not have any clear sandboxing or safety guardrails so it may peek inside paths that shouldn't be allowed
+## ⚠️ Limitations
+
+> **Personal use only.** This project is intended for people who understand the risks of letting an AI agent operate freely in their system. Don't use it if you don't.
+
+> **No path sandboxing.** The agent can read, write, and delete from any accessible path. There are no guardrails beyond the deletion confirmation check.
