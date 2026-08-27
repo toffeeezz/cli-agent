@@ -85,3 +85,15 @@ def render_hidden_prompt() -> str:
 def render_cli_text(text: str) -> None:
     md = Markdown(text)
     console.print(agent_prompt(), md, end="")
+
+
+def render_thinking_spinner(message: str = "Ame is thinking..."):
+    """Context manager that shows a spinner with a message while the agent's working.
+
+    Use it like:
+        with render_thinking_spinner("Hmm, let me think..."):
+            async for chunk in agent.get_reply(user_input):
+                render_agent_text(chunk)
+    """
+    return console.status(f"[yellow]{message}[/yellow]")
+
