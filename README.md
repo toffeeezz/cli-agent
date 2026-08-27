@@ -7,11 +7,11 @@ An interactive terminal agent/companion wrapper built with Python and `rich` for
 * **Terminal History & Tab Completion**: Full support for arrow-key command history and Tab-based auto-suggestions for all internal commands
 * **Command Tools**: Built-in internal commands to allow at-runtime modifications of environment variables, model and service switching, etc.
 * **Multi-line Mode**: Allows for parsing long paragraphs or deep blocks of code seamlessly
+* **Tools Plugins**: Allow for the agent to call tools on-demand
 
 ## Upcoming Features & Short-Term Goals
 * **Agentic AI**: Allow for the LLM model to behave like a standard agent
 * **Skills Plugins**: Allow for the agent to utilize skills on-demand
-* **Tools Plugins**: Allow for the agent to call tools on-demand
 * **Persona**: Allow for the agent to role-play a persona which is modifiable at-runtime
 * **Memory Recall**: Allow for the agent to recall contextually relevant memories
 * **Guard Rails**: Require the agent to request a confirmation from the user when doing tasks like deleting data, etc.
