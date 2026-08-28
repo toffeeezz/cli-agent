@@ -2,6 +2,7 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
+from ame.agent.agent import agent
 from ame.gui.window import MainWindow
 
 

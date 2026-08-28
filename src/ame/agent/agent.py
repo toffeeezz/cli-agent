@@ -1,10 +1,10 @@
 import json
 import logging
+import re
 from collections.abc import AsyncGenerator
 from enum import Enum
 from logging import Logger
 from pathlib import Path
-import re
 from typing import final
 
 from openai.types.chat import (
@@ -135,6 +135,11 @@ class Agent:
             match response.finish_reason:
                 case "stop":
                     logger.info("Model finished with a final answer (stop).")
+                    assistant_msg: ChatCompletionAssistantMessageParam = {
+                        "role": "assistant",
+                        "content": response.content,
+                    }
+                    self.messages.append(assistant_msg)
                     yield response.content
                     self.status = Status.STANDBY
                     return

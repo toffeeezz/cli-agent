@@ -1,5 +1,6 @@
 import datetime
 from typing import final
+from zoneinfo import ZoneInfo
 
 from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QPainterPath, QRegion, QResizeEvent
@@ -51,6 +52,9 @@ class MainWindow(QMainWindow):
 
         self.chat_scroll_area = QScrollArea()
         self.chat_scroll_area.setWidgetResizable(True)
+        self.chat_scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
 
         chat_widget = QWidget()
         self.chat_layout = QVBoxLayout(chat_widget)
@@ -125,6 +129,6 @@ class MainWindow(QMainWindow):
         self.chat_scroll_area.setWidget(chat_widget)
 
     def add_chat_bubble(self, message: str, from_user: bool) -> None:
-        now = datetime.datetime.now(tz=datetime.UTC)
+        now = datetime.datetime.now(ZoneInfo("Asia/Manila"))
         time = now.strftime("%H:%M %p")
         self.chat_layout.addWidget(Message(message, from_user, time))

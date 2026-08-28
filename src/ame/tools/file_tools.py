@@ -16,7 +16,7 @@ def read_file(path: str) -> tuple[bool, str]:
     """Reads and returns the full text contents of a file at the given path.
 
     Use this to inspect a file's contents before editing, summarizing, or
-    answering questions about what it contains. Fails if the file does not
+    answering questions about what it contains. Echo it back to the user if they ask what's in it. Fails if the file does not
     exist or cannot be read due to permissions.
     """
     try:

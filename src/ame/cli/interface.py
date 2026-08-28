@@ -11,6 +11,7 @@ from ame.cli.renderer import (
 )
 from ame.errors import ProgramError
 from ame.settings.settings import get_settings
+from ame.tools import git_tools
 
 
 def command_completer():
@@ -101,4 +102,3 @@ async def run_cli() -> None:
                 console.print("\n[yellow]Workspace buffer flushed clean.[/yellow]")
             else:
                 console.print("\n[yellow]Use /exit to shut down safely.[/yellow]")
-
