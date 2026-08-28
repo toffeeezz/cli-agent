@@ -1,0 +1,30 @@
+-e git+https://github.com/toffeeezz/cli-agent.git@8ae8f2c30cd1f47520bda2cfacfbee4663329fc0#egg=ame_agent
+annotated-types==0.8.0
+anyio==4.14.2
+-e git+https://github.com/toffeeezz/cli-agent.git@8ae8f2c30cd1f47520bda2cfacfbee4663329fc0#egg=cli_agent
+h11==0.16.0
+httpcore2==2.12.0
+httpx2==2.12.0
+idna==3.19
+jiter==0.16.0
+Markdown==3.10.3
+markdown-it-py==4.2.0
+mdurl==0.1.2
+openai==3.3.1
+prompt_toolkit==3.0.53
+pydantic==2.13.4
+pydantic-settings==2.15.0
+pydantic_core==2.46.4
+Pygments==2.21.0
+PyQt6==6.11.0
+PyQt6-Qt6==6.11.2
+PyQt6_sip==13.12.0
+python-dotenv==1.2.3
+rich==15.0.0
+ruff==0.16.4
+Send2Trash==2.1.0
+sniffio==1.3.1
+truststore==0.10.4
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+wcwidth==0.8.2
