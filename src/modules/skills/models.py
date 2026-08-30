@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable
 
 from pydantic import BaseModel, ConfigDict
 
@@ -27,5 +28,5 @@ class SkillData(BaseModel):
 
 class Skill(BaseModel):
     name: str
-    tool_registry: ToolRegistry
+    tools: list[Callable[..., object]]
     model_config = ConfigDict(arbitrary_types_allowed=True)
