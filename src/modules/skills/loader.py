@@ -9,6 +9,7 @@ from yaml import YAMLError
 
 from modules.core.errors import ProgramError
 from modules.skills.errors import (
+    SKillNotFoundError,
     SkillInvalidMD,
     SkillMissingMD,
     SkillModuleError,
@@ -45,8 +46,8 @@ def load_skill_metadatas(dir: Path) -> list[SkillData]:
     return internal_skill_metadatas
 
 
-def build_sklls(metadatas: list[SkillData]) -> list[Skill]:
-    skills: list[Skill] = []
+def build_sklls(metadatas: list[SkillData]) -> dict[str, Skill]:
+    skills: dict[str, Skill] = {}
     for data in metadatas:
         if not data.path.is_file() or data.path.suffix != ".py":
             raise SkillModuleError(
@@ -72,6 +73,13 @@ def build_sklls(metadatas: list[SkillData]) -> list[Skill]:
             func = member[1]
             _ = registry.register(data.name, func)
 
-        skills.append(Skill(name=data.name, tool_registry=registry))
+        skills[data.name] = Skill(name=data.name, tool_registry=registry)
 
     return skills
+
+
+def get_skill(skill_dict: dict[str, Skill], name: str) -> Skill:
+    skill = skill_dict.get(name)
+    if skill is None:
+        raise SKillNotFoundError(name)
+    return skill
