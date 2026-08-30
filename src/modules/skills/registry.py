@@ -1,3 +1,5 @@
+import asyncio
+import functools
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -20,7 +22,7 @@ class ToolEntry:
 
 class ToolRegistry:
     def __init__(self) -> None:
-        self._tools: dict[str, ToolEntry] = {}
+        self.tools: dict[str, ToolEntry] = {}
 
     def register(self, namespace: str, func: Callable[P, R]) -> Callable[P, R]:
 
@@ -40,7 +42,7 @@ class ToolRegistry:
 
         tool_name = f"{namespace}.{func.__name__}"
 
-        self._tools[tool_name] = ToolEntry(
+        self.tools[tool_name] = ToolEntry(
             function=func,
             schema={
                 "type": "function",
@@ -57,26 +59,38 @@ class ToolRegistry:
         )
         return func
 
+    def unregister(self, namespace: str) -> None:
+        prefix = f"{namespace}."
+        self.tools = {k: v for k, v in self.tools.items() if not k.startswith(prefix)}
+
     @property
     def schema(self) -> list[ChatCompletionToolUnionParam]:
         tools: list[ChatCompletionToolUnionParam] = [
-            _.schema for _ in self._tools.values()
+            _.schema for _ in self.tools.values()
         ]
         return tools
+
+    @property
+    def functions(self):
+        functions = [function.function for function in self.tools.values()]
+        return functions
 
     async def execute_tool(
         self, name: str, kwargs: dict[str, object]
     ) -> tuple[bool, object]:
         """Tries to execute the given tool and its arguments. Throws ToolNotFoundError, ToolArgumentError, ToolError"""
-        if name not in self._tools:
+        if name not in self.tools:
             raise ToolNotFoundError(name)
 
-        tool = self._tools[name]
+        tool = self.tools[name]
+        loop = asyncio.get_running_loop()
         try:
             if inspect.iscoroutinefunction(tool.function):
                 result = await tool.function(**kwargs)
             else:
-                result = tool.function(**kwargs)
+                result = await loop.run_in_executor(
+                    None, functools.partial(tool.function, **kwargs)
+                )
 
             if not (
                 isinstance(result, tuple)
