@@ -35,3 +35,5 @@ An interactive terminal agent/companion wrapper built with Python and `rich` for
 > **INTENDED FOR PERSONAL USE!!** This project is intended for people who know what they're doing. Don't use it if you lack the knowledge of the dangers of letting an AI agent run freely in your system.
 
 > **NO PATH SANDBOXING!!** The agent does not have any clear sandboxing or safety guardrails so it may peek inside paths that shouldn't be allowed. The only protection is the deletion confirmation check, and that's not enough to call it safe.
+
+> **SECRETS LEAKAGE!!** This agent reads files and sends their contents straight to the LLM — including any sensitive info like API keys, tokens, or passwords from `.env` files or config files. If you're running this, make damn sure you're not accidentally feeding secrets into a model prompt. **Never** let the agent read your `.env` unless you're okay with those values being transmitted externally.
