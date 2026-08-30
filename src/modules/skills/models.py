@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 from modules.skills.registry import ToolRegistry
 
+
 class ToolRequest(BaseModel):
     message: str
     tool_name: str
