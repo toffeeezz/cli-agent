@@ -23,6 +23,12 @@ class SkillInvalidMD(ProgramError):
         )
 
 
+@final
+class SKillNotFoundError(SkillModuleError):
+    def __init__(self, name: str) -> None:
+        super().__init__(f"Trying to get an unknown skill: {name}")
+
+
 class ToolError(ProgramError):
     tool_name: str
 
