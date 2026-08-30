@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
+from modules.skills.registry import ToolRegistry
 
 class ToolRequest(BaseModel):
     message: str
@@ -21,3 +22,9 @@ class SkillData(BaseModel):
     version: str
     tools: list[str]
     path: Path
+
+
+class Skill(BaseModel):
+    name: str
+    tool_registry: ToolRegistry
+    model_config = ConfigDict(arbitrary_types_allowed=True)
