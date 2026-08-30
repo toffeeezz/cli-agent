@@ -5,7 +5,10 @@ from modules.core.errors import ProgramError
 
 
 class SkillModuleError(ProgramError):
+    message: str
+
     def __init__(self, msg: str) -> None:
+        self.message = msg
         super().__init__(msg)
 
 
