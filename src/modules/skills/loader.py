@@ -8,12 +8,13 @@ from pydantic import ValidationError
 from yaml import YAMLError
 
 from modules.core.errors import ProgramError
-from modules.skills.base import (
-    Skill,
-    SkillData,
+from modules.skills.errors import (
     SkillInvalidMD,
     SkillMissingMD,
     SkillModuleError,
+)
+from modules.skills.models import Skill, SkillData
+from modules.skills.registry import (
     ToolRegistry,
 )
 
