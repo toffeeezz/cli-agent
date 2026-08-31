@@ -15,9 +15,6 @@ from modules.skills.errors import (
     SKillNotFoundError,
 )
 from modules.skills.models import Skill, SkillData
-from modules.skills.registry import (
-    ToolRegistry,
-)
 
 INTERNAL_SKILLS_DIR = Path(__file__).resolve().parent
 EXTERNAL_SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "plugins/skills"

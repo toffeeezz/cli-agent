@@ -1,9 +1,7 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from pydantic import BaseModel, ConfigDict
-
-from modules.skills.registry import ToolRegistry
 
 
 class ToolRequest(BaseModel):
