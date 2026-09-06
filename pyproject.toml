@@ -1,0 +1,27 @@
+[project]
+name = "assistant"
+version = "0.1.0"
+description = "A tool-calling LLM agent wrapper."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "toffeezzz" }]
+dependencies = [
+  "openai>=2.54.0,<3.0.0",
+  "rich",
+  "pydantic",
+  "send2trash",
+  "python-dotenv",
+  "prompt-toolkit",
+  "pyqt6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+cli-agent = "main:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
