@@ -1,0 +1,11 @@
+
+#Hidden
+.env
+*.log
+*.ruff_cache
+
+#Files
+main.py
+
+#Directories
+__pycache__/
