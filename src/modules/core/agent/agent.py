@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 class Agent:
     skill_registry: SkillRegistry
-    memory_manager: MemoryManager
+    _memory_manager: MemoryManager
     server: Server
 
     def __init__(self, config: AgentConfig) -> None:
@@ -59,7 +59,7 @@ class Agent:
         client = AsyncOpenAI(base_url=config.url, api_key=config.api_key)
 
         self.skill_registry = SkillRegistry(SKILL_ENTRIES)
-        self.memory_manager = MemoryManager(new_session)
+        self._memory_manager = MemoryManager(new_session)
         self.server = Server(client)
 
         # Initialize system prompt
@@ -70,7 +70,25 @@ class Agent:
             "role": "system",
             "content": system_prompt_content,
         }
-        self.memory_manager.add_message(system_prompt)
+
+        self._memory_manager.add_message(system_prompt)
+        self._memory_manager.current_session.registered_skills.extend(
+            self.skill_registry.registered_skills.keys()
+        )
+
+    def load_session(self, session: MemorySession) -> None:
+        self.skill_registry.registered_skills.clear()
+
+        for skill_name in session.registered_skills:
+            success, _ = self.skill_registry.register_skill(skill_name)
+            logger.info(
+                f"The {skill_name} skill was loaded with a success value of {success}."
+            )
+
+        self._memory_manager.load_session(session)
+
+    async def save_session(self, path: str) -> None:
+        await self._memory_manager.save_session(path)
 
     async def generate_response(
         self, name: str, prompt: str, config: AgentConfig
@@ -78,9 +96,9 @@ class Agent:
         user_prompt: ChatCompletionMessageParam = {
             "role": "user",
             "name": name,
-            "content": prompt,
+            "content": f"[{name}]: {prompt.strip()}",
         }
-        self.memory_manager.add_message(user_prompt)
+        self._memory_manager.add_message(user_prompt)
         loop_count: int = 1
         while loop_count <= config.max_loops:
             loop_count += 1
@@ -89,7 +107,7 @@ class Agent:
                 model=config.model,
                 max_completion_tokens=config.max_completion_tokens,
                 temperature=config.temperature,
-                messages=self.memory_manager.messages,
+                messages=self._memory_manager.messages,
                 tools=self.skill_registry.tool_schemas,
                 reasoning_effort=config.reasoning_effort,
             )
@@ -125,8 +143,15 @@ class Agent:
 
             logger.info(f"Agent: {server_response.content}")
             logger.info(f"Agent[Reasoning]: {server_response.reasoning}")
+
+            assitant_msg: OpenRouterAssistantMessageParam = {
+                "role": "assistant",
+                "content": server_response.content.strip(),
+                "reasoning_details": server_response.reasoning_details,
+                "reasoning": server_response.reasoning,
+            }
             if server_response.message:
-                self.memory_manager.add_message(server_response.message)
+                self._memory_manager.add_message(assitant_msg)
 
             match server_response.finish_reason:
                 case FinishReason.STOP:
@@ -158,9 +183,9 @@ class Agent:
                 "content": f"{result.name} tool from {result.skill_name} returned a success value of {result.success}: {result.value}",
             }
             logger.info(
-                f"The agent used the following tool from {result.skill_name.capitalize()} skill: {result.name}\nSuccess: {result.success}\nResult: {result.value}"
+                f"The agent used the following tool from {result.skill_name.capitalize()} skill: {result.name}\nSuccess: {result.success}"
             )
-            self.memory_manager.add_message(tool_prompt)
+            self._memory_manager.add_message(tool_prompt)
 
     async def _execute_tool(
         self, tool_calls: list[ChatCompletionMessageToolCallUnion]
@@ -173,10 +198,17 @@ class Agent:
                 continue
 
             try:
+                logger.info(
+                    f"The agent is attempting to use {tc.function.name} tool with args: {tc.function.arguments}"
+                )
                 kwargs = json.loads(tc.function.arguments)
                 result = await self.skill_registry.execute_skill(
                     tc.function.name, kwargs
                 )
+                if tc.function.name.strip() == "core.register_skill":
+                    self._memory_manager.current_session.registered_skills.append(
+                        kwargs.get("name") or ""
+                    )
             except json.JSONDecodeError as e:
                 logger.error(
                     f"Model returned an invalid json format for the tool arguments: {e}"
