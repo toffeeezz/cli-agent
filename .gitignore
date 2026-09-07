@@ -3,6 +3,7 @@
 .env
 *.log
 *.ruff_cache
+*.json
 
 #Files
 main.py
