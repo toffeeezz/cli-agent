@@ -109,8 +109,18 @@ class SkillRegistry:
         self, tool_fullname: str, kwargs: dict[str, object]
     ) -> ToolResult:
         split = tool_fullname.split(".", maxsplit=1)
-        skill_name = split[0]
-        tool_name = split[1]
+        try:
+            skill_name = split[0]
+            tool_name = split[1]
+        except IndexError:
+            logger.error(
+                f"Tried to execute a tool with an invalid name format: {tool_fullname} "
+            )
+            return ToolResult(
+                skill_name="",
+                success=False,
+                value="Failed to parse the name for the tool. Format should be: 'skillname.toolname'",
+            )
 
         skill = self.registered_skills.get(skill_name)
 
