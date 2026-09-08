@@ -131,3 +131,72 @@ def git_diff(cwd_path: str, file_path: str) -> tuple[bool, str]:
         return False, f"Error: Git returned exit code {e.returncode}:\n{e.stderr}"
     except subprocess.TimeoutExpired:
         return False, "Error: Command execution timed out."
+
+
+def git_restore(cwd_path: str, file_path: str, args: list[str]) -> tuple[bool, str]:
+    """Restore a file's contents using `git restore`.
+
+    Restores ``file_path`` to match some source (by default, the index for
+    the working tree, or HEAD for the index), discarding local changes
+    according to the flags passed in ``args``. This is a potentially
+    destructive operation: unstaged/uncommitted changes to the file can be
+    permanently lost unless recoverable via ``--source`` or the git reflog.
+
+    The resulting command is:
+        git restore <args...> <file_path>
+
+    e.g. args=["--staged"] runs `git restore --staged <file_path>`
+         args=["--source=HEAD~1"] runs `git restore --source=HEAD~1 <file_path>`
+
+    Args:
+        cwd_path: The working directory of the git repository (equivalent to
+                  the ``-C`` or ``cwd`` argument for git commands).
+        file_path: The path of the file to restore, relative to cwd_path.
+        args: Additional flags to pass to `git restore`, inserted before
+              file_path on the command line. Common values include:
+                - ``--staged`` / ``-S``: restore the index (unstage) instead
+                  of the working tree.
+                - ``--worktree`` / ``-W``: restore the working tree (default
+                  target if neither this nor ``--staged`` is given).
+                - ``--source=<commit>`` / ``-s <commit>``: restore from a
+                  specific commit instead of the default source.
+                - ``--patch`` / ``-p``: interactively select hunks to
+                  restore (note: this requires an interactive terminal and
+                  may hang or fail under a non-interactive subprocess call).
+                - ``--ours`` / ``--theirs``: restore from a specific side of
+                  an unresolved merge conflict.
+              Pass an empty list for default behavior (restore working tree
+              from the index).
+
+    Returns:
+        A tuple of (success, output).
+        - On success, ``output`` is stdout from `git restore` (this is
+          typically empty, since `git restore` produces no output on
+          success unless combined with flags like ``--verbose``).
+        - On failure, ``output`` is an error message describing what went
+          wrong (e.g., git not found, non-zero exit such as an invalid
+          source/pathspec or unmerged conflict, or timeout).
+
+    Note:
+        Unlike `git diff`, this function mutates the working tree and/or
+        index. Callers should be confident in the args passed, since
+        restored changes are not staged for easy undo the way `git stash`
+        would be.
+    """
+    try:
+        command: list[str] = ["git", "restore", file_path]
+        command[2:2] = args
+        result = subprocess.run(
+            command,
+            cwd=cwd_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return True, result.stdout
+    except FileNotFoundError:
+        return False, "Error: 'git' executable was not found on system PATH"
+    except subprocess.CalledProcessError as e:
+        return False, f"Error: Git returned exit code {e.returncode}:\n{e.stderr}"
+    except subprocess.TimeoutExpired:
+        return False, "Error: Command execution timed out."
