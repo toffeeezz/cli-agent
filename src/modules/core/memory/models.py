@@ -1,8 +1,6 @@
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
-from modules.skill.models import Skill
-
 
 class Memory(BaseModel):
     speaker: str
