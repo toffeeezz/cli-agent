@@ -1,4 +1,5 @@
 import sys
+from typing import final
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -11,6 +12,7 @@ from modules.gui.chat_panel import ChatPanel
 from modules.gui.left_panel import LeftPanel
 
 
+@final
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -30,14 +32,3 @@ class MainWindow(QMainWindow):
 
         center_widget.setLayout(hbox_layout)
         self.setCentralWidget(center_widget)
-
-
-def main():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()

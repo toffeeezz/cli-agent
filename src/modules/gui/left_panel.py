@@ -1,3 +1,5 @@
+from typing import final
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
@@ -11,10 +13,11 @@ from modules.utils.qt_helper import scale_pixmap
 from modules.utils.resource import get_resource_fullpath
 
 
+@final
 class LeftPanel(QWidget):
     """Left side panel — webcam display + menu buttons."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("leftPanel")
         self.setMaximumWidth(400)
@@ -30,9 +33,7 @@ class LeftPanel(QWidget):
 
         self.cam_label = QLabel()
         self.cam_label.setObjectName("camLabel")
-        self.cam_label.setAlignment(
-            Qt.AlignmentFlag.AlignCenter
-        )
+        self.cam_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         pixmap = QPixmap(str(get_resource_fullpath("imgs/bg_stream.webp")))
         if pixmap and not pixmap.isNull():
             scaled = scale_pixmap(pixmap, 0.5)
@@ -53,9 +54,9 @@ class LeftPanel(QWidget):
         # --- Menu buttons ---
         btn_specs = [
             ("toggleCamera", "📷  Toggle Camera"),
-            ("settingsBtn",   "⚙️  Settings"),
-            ("themeBtn",      "🎨  Change Theme"),
-            ("aboutBtn",      "ℹ️  About"),
+            ("settingsBtn", "⚙️  Settings"),
+            ("themeBtn", "🎨  Change Theme"),
+            ("aboutBtn", "ℹ️  About"),
         ]
 
         for obj_name, text in btn_specs:
@@ -68,3 +69,4 @@ class LeftPanel(QWidget):
         layout.addStretch(1)
 
         self.setLayout(layout)
+
