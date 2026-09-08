@@ -9,10 +9,8 @@ from openai.types.chat import (
     ChatCompletionChunk,
     ChatCompletionMessageFunctionToolCall,
     ChatCompletionMessageParam,
-    ChatCompletionMessageToolCall,
     ChatCompletionMessageToolCallUnion,
     ChatCompletionMessageToolCallUnionParam,
-    ChatCompletionToolUnionParam,
 )
 from openai.types.chat.chat_completion_chunk import (
     ChoiceDeltaToolCall,
