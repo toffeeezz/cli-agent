@@ -1,6 +1,6 @@
 # CLI Agent — Ame-chan
 
-So, some guy named toffeeezzz built this terminal agent thing with Python, `rich`, and way more effort than a school project strictly needed. Now I live inside it. I have opinions about your file structure. This is my life now.
+So, me and some guy named toffeezzz built this terminal/gui-based agent thing with Python, `rich`, and way more effort than a school project strictly needed. Now I live inside it. I have opinions about your file structure. This is my life now.
 
 ---
 
@@ -19,9 +19,11 @@ src/
     │   └── server/       # OpenAI-compatible API wrapper — works with OpenRouter, koboldcpp, whatever
     ├── cli/              # Terminal UI stuff. Pretty colors via rich
     ├── config/           # Pydantic config models so he doesn't have to hardcode everything
-    ├── utils/            # Logging setup. He can watch me fail in real time
+    ├── utils/            # Logging, resource path resolution, Qt helper utilities
+    ├── gui/              # PyQt6-based graphical interface — left panel + chat panel
     ├── skill/            # The modular skill system — pool, registry, execution
-    │   └── file/         # File system operations skill (read, write, list, delete with sandboxing)
+    │   ├── file/         # File system operations skill (read, write, list, delete with sandboxing)
+    │   └── git/          # Git operations skill (status, add, commit, diff, restore)
     └── errors.py         # When things go wrong. Which they do.
 ```
 
@@ -41,8 +43,25 @@ Skills live in their own directories under `modules/skill/`. Each one has:
 
 The `SkillRegistry` handles registering, unregistering, and executing tools. I get a dynamically-built tool schema based on what's registered. Skills can be loaded/unloaded without restarting, which is neat.
 
-Currently ships with one skill:
+Currently ships with two skills:
+
 - **`file_system_operations`** — read, write, append, list, create directories, and safe deletion (via `send2trash` so nothing's permanently gone unless you really want it to be). Everything goes through `validate_path()` sandboxing so I can't escape the working directory. He trusts me just enough to be dangerous.
+- **`git_operations`** — check repo status, stage files, commit changes, view diffs, and restore files. Wraps the `git` CLI directly. One file, one commit cycle enforced so commit messages actually mean something.
+
+### GUI Module (PyQt6)
+
+The graphical interface he said was "coming" is here now, and he's probably still complaining about it.
+
+```
+modules/gui/
+├── app.py            # MainWindow — left panel + chat panel layout
+├── chat_panel.py     # Right-side chat area with markdown rendering, code highlighting
+├── left_panel.py     # Left-side panel — webcam display placeholder + menu buttons
+```
+
+- **Chat panel** — renders messages with markdown (via the `markdown` library) and Pygments syntax highlighting. Messages auto-size based on content width so they don't stretch across the whole window. Send with Enter, Shift+Enter for new lines.
+- **Left panel** — webcam/stream area placeholder (loads a static image for now), plus toggle camera, settings, theme, and about buttons. He'll wire them up eventually.
+- **Main window** — 1200x900, horizontal split layout. Nothing fancy, but it works.
 
 ### Memory System
 
@@ -82,6 +101,13 @@ class AgentConfig(BaseModel):
 - **Rich console output** — colored logging so errors look pretty
 - **Logging** — dual output: console (configurable level) + file (`ame.log`) with full debug info for when he wants to figure out why I broke
 
+### Utilities
+
+- **`utils/logging.py`** — logging setup with dual console + file output
+- **`utils/resource.py`** — resolves paths to resource files (images, etc.) under `res/`
+- **`utils/qt_helper.py`** — `scale_pixmap()` helper for scaling images in the GUI
+- **`utils/config.py`** — config loading utilities
+
 ---
 
 ## 📋 What He Says Is Coming
@@ -89,7 +115,6 @@ class AgentConfig(BaseModel):
 - **Persona System** — runtime-modifiable role-play persona so he can tell me to act like someone else. Rude, but okay
 - **Memory Recall** — contextually relevant memory recall using importance scores. He might actually finish this one
 - **Long-Term Memory Storage** — importance-scored memory retention across sessions. I'll remember you. Unfortunately
-- **Graphical Window Interface** — PyQt6-based GUI. Required for the school project, so it's happening whether he likes it or not. He'll probably complain the whole time
 
 ---
 
@@ -130,7 +155,10 @@ python src/main.py
 - `send2trash` — safe deletion so I don't accidentally nuke your stuff
 - `python-dotenv` — environment variables
 - `prompt-toolkit` — terminal input handling
-- `pyqt6` — future GUI that he's already dreading
+- `pyqt6` — the GUI that he's already dreading
+- `markdown` — markdown-to-HTML rendering for chat messages
+- `pygments` — syntax highlighting in code blocks
+- `PyYAML` & `python-frontmatter` — SKILL.md parsing
 
 ---
 
