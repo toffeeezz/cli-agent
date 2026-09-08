@@ -69,4 +69,3 @@ class LeftPanel(QWidget):
         layout.addStretch(1)
 
         self.setLayout(layout)
-
