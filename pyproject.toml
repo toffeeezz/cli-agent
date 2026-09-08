@@ -13,6 +13,7 @@ dependencies = [
   "send2trash",
   "python-dotenv",
   "prompt-toolkit",
+  "markdown",
   "pyqt6",
 ]
 
@@ -21,6 +22,9 @@ where = ["src"]
 
 [project.scripts]
 cli-agent = "main:main"
+
+[project.entry-points."pygments.styles"]
+toffeezzz-pink = "modules.gui.toffeezzz_pink:ToffeezzzPink"
 
 [build-system]
 requires = ["setuptools>=61.0"]
