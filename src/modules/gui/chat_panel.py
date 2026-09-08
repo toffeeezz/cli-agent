@@ -1,8 +1,9 @@
-import asyncio
 import logging
 import math
 from typing import final, override
 
+import markdown
+from pygments.formatters import HtmlFormatter
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QFont, QKeyEvent, QTextCursor, QTextDocument
 from PyQt6.QtWidgets import (
@@ -17,7 +18,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,7 @@ class ChatPanel(QWidget):
             "Type a message... (Shift+Enter for new line)"
         )
         self.message_input.setFixedHeight(60)
+        self.message_input.setAcceptRichText(False)
         self.message_input.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
@@ -148,6 +149,43 @@ class ChatPanel(QWidget):
         document.setDocumentMargin(0)
         document.setDefaultFont(bubble.font())
 
+        CODE_BLOCK_CSS = HtmlFormatter(style="dracula").get_style_defs(".codehilite")
+
+        # Dracula's token palette (light purples/cyans/yellows) is calibrated
+        # for a dark background. Keep the code block dark - just tinted
+        # toward each bubble's hue - so the highlighting stays legible
+        # instead of washing out against a mid-tone pink.
+        CODE_BLOCK_BG = "#FF5C9E" if is_user else "#3D2B35"
+
+        GLOBAL_STYLE = f"""
+        QScrollArea {{
+            background-color: #1e1e1e;
+            border: none;
+        }}
+        QWidget#chatContainer {{
+            background-color: #1e1e1e;
+        }}
+        QTextBrowser {{
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 10px;
+            border: none;
+        }}
+        /* Inject Pygments syntax highlighting styles */
+        {CODE_BLOCK_CSS}
+        /* Style the overall <pre> container for the markdown code blocks */
+        .codehilite pre {{
+            background-color: {CODE_BLOCK_BG};
+            color: #f8f8f2;
+            padding: 8px;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }}
+        """
+
         # Style
         if is_user:
             bubble.setStyleSheet(
@@ -165,23 +203,24 @@ class ChatPanel(QWidget):
             )
 
         bubble.ensurePolished()
-        markdown_txt = text.replace("\n", "\n\n")
-        document.setMarkdown(markdown_txt)
+        html_content = markdown.markdown(text, extensions=["fenced_code", "codehilite"])
+
+        document.setDefaultStyleSheet(GLOBAL_STYLE)
+        bubble.setHtml(f"<html><body>{html_content}</body></html>")
 
         cursor = bubble.textCursor()
         _ = cursor.movePosition(QTextCursor.MoveOperation.Start)
         bubble.setTextCursor(cursor)
 
-        # Padding values match the stylesheet above (8px top/bottom, 12px left/right).
         horizontal_padding = 30
         vertical_padding = 16
 
         max_content_width = int(viewport.width() * 0.7) - horizontal_padding
-        natural_width = self._measure_natural_width(markdown_txt, bubble.font())
+        natural_width = self._measure_natural_width(text, bubble.font(), GLOBAL_STYLE)
         content_width = min(natural_width, max_content_width)
 
         document.setTextWidth(content_width)
-        content_height = int(document.size().height()) + 20
+        content_height = int(document.size().height()) + 10
 
         bubble.setFixedWidth(content_width + horizontal_padding)
         bubble.setFixedHeight(content_height + vertical_padding)
@@ -194,10 +233,13 @@ class ChatPanel(QWidget):
         if scrollbar:
             scrollbar.setValue(scrollbar.maximum())
 
-    def _measure_natural_width(self, markdown_txt: str, reference_font: QFont) -> int:
+    def _measure_natural_width(
+        self, html_content: str, reference_font: QFont, style_sheet: str
+    ) -> int:
         probe = QTextDocument()
         probe.setDocumentMargin(0)
         probe.setDefaultFont(reference_font)
-        probe.setMarkdown(markdown_txt)
+        probe.setDefaultStyleSheet(style_sheet)
+        probe.setHtml(f"<html><body>{html_content}</body></html>")
         probe.setTextWidth(-1)  # no wrap constraint — true natural width
         return math.ceil(probe.idealWidth()) + 2  # round up + small safety buffer
