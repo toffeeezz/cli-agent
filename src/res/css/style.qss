@@ -9,8 +9,14 @@ QWidget {
     font-size: 13px;
 }
 
+QWidget#chatPanel {
+    background-color: #FFF5F8;
+    color: #3A1729;
+    font-size: 13px;
+}
+
 QMainWindow {
-    background-color:FFF5F8;
+    background-color: #FFF5F8;
 }
 
 /* ---------- Surfaces ---------- */
@@ -48,10 +54,11 @@ QLabel#disabled {
 }
 
 /* ---------- Buttons ---------- */
+
 QPushButton {
     background-color: #FF5C9E;
     color: #FFF5F8;
-    border: none;
+    border: 1px solid #FF5C9E;
     border-radius: 6px;
     padding: 6px 16px;
     font-weight: 600;
@@ -287,3 +294,8 @@ QLabel[state="success"] { color: #4CAF7D; }
 QLabel[state="warning"] { color: #E8A93C; }
 QLabel[state="error"]   { color: #E85D5D; }
 QLabel[state="info"]    { color: #3FA9B5; }
+
+/* ---------- Scroll Area / Chat Panel specifics ---------- */
+QScrollArea#chatScrollArea {
+    background-color: #F3B8D2;
+}
