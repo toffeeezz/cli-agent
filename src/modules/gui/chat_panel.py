@@ -1,10 +1,11 @@
 import logging
 import math
+import re
 from typing import final, override
 
 import markdown
 from pygments.formatters import HtmlFormatter
-from PyQt6.QtCore import QEvent, QObject, Qt
+from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QKeyEvent, QTextCursor, QTextDocument
 from PyQt6.QtWidgets import (
     QFrame,
@@ -26,11 +27,11 @@ logger = logging.getLogger(__name__)
 class ChatPanel(QWidget):
     """Right-side panel: chat messages + text input."""
 
+    user_msg_sent = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
         self.setObjectName("chatPanel")
-        self.setStyleSheet("background-color: #FDE9F0")
-        self.setAutoFillBackground(True)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)
@@ -118,7 +119,7 @@ class ChatPanel(QWidget):
         if not text:
             return
 
-        self._add_message(text, is_user=True)
+        self.add_message(text, is_user=True)
         self.message_input.clear()
 
         first_item = self.message_layout.itemAt(0)
@@ -126,8 +127,11 @@ class ChatPanel(QWidget):
             w = first_item.widget()
             if w and w.objectName() == "chatPlaceholder":
                 w.deleteLater()
+        self.user_msg_sent.emit(text)
 
-    def _add_message(self, text: str, is_user: bool = False) -> None:
+    # [ame] refactored: build rendered HTML first, pass it to both probe and bubble,
+    #                 moved ensurePolished after setHtml, fixed _measure_natural_width
+    def add_message(self, text: str, is_user: bool = False) -> None:
 
         bubble = QTextBrowser()
         bubble.setObjectName("userMessage" if is_user else "botMessage")
@@ -149,13 +153,7 @@ class ChatPanel(QWidget):
         document.setDocumentMargin(0)
         document.setDefaultFont(bubble.font())
 
-        CODE_BLOCK_CSS = HtmlFormatter(style="dracula").get_style_defs(".codehilite")
-
-        # Dracula's token palette (light purples/cyans/yellows) is calibrated
-        # for a dark background. Keep the code block dark - just tinted
-        # toward each bubble's hue - so the highlighting stays legible
-        # instead of washing out against a mid-tone pink.
-        CODE_BLOCK_BG = "#FF5C9E" if is_user else "#3D2B35"
+        CODE_BLOCK_CSS = HtmlFormatter(style="emacs").get_style_defs(".codehilite")
 
         GLOBAL_STYLE = f"""
         QScrollArea {{
@@ -175,8 +173,13 @@ class ChatPanel(QWidget):
         /* Inject Pygments syntax highlighting styles */
         {CODE_BLOCK_CSS}
         /* Style the overall <pre> container for the markdown code blocks */
+        .codehilite {{
+            background-color: #1a1a1a;
+            border-radius: 6px;
+            padding: 8px;
+            display: block;
+        }}
         .codehilite pre {{
-            background-color: {CODE_BLOCK_BG};
             color: #f8f8f2;
             padding: 8px;
             border-radius: 5px;
@@ -202,11 +205,20 @@ class ChatPanel(QWidget):
                 """
             )
 
-        bubble.ensurePolished()
+        # Build rendered HTML first so we can measure it properly
         html_content = markdown.markdown(text, extensions=["fenced_code", "codehilite"])
+        html_content = re.sub(
+            r'(<div class="codehilite">.*?</div>)',
+            r'<table cellpadding="8" cellspacing="0" width="100%" '
+            + r'style="background-color:#1a1a1a; border-radius:12px;">'
+            + r"<tr><td>\1</td></tr></table>",
+            html_content,
+            flags=re.DOTALL,
+        )
 
         document.setDefaultStyleSheet(GLOBAL_STYLE)
         bubble.setHtml(f"<html><body>{html_content}</body></html>")
+        bubble.ensurePolished()
 
         cursor = bubble.textCursor()
         _ = cursor.movePosition(QTextCursor.MoveOperation.Start)
@@ -216,11 +228,13 @@ class ChatPanel(QWidget):
         vertical_padding = 16
 
         max_content_width = int(viewport.width() * 0.7) - horizontal_padding
-        natural_width = self._measure_natural_width(text, bubble.font(), GLOBAL_STYLE)
+        natural_width = self._measure_natural_width(
+            html_content, bubble.font(), GLOBAL_STYLE
+        )
         content_width = min(natural_width, max_content_width)
 
         document.setTextWidth(content_width)
-        content_height = int(document.size().height()) + 10
+        content_height = int(document.size().height()) + 30
 
         bubble.setFixedWidth(content_width + horizontal_padding)
         bubble.setFixedHeight(content_height + vertical_padding)
@@ -241,5 +255,5 @@ class ChatPanel(QWidget):
         probe.setDefaultFont(reference_font)
         probe.setDefaultStyleSheet(style_sheet)
         probe.setHtml(f"<html><body>{html_content}</body></html>")
-        probe.setTextWidth(-1)  # no wrap constraint — true natural width
-        return math.ceil(probe.idealWidth()) + 2  # round up + small safety buffer
+        probe.setTextWidth(-1)
+        return math.ceil(probe.idealWidth()) + 2
