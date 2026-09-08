@@ -2,10 +2,11 @@
 name: git_operations
 desc: >-
   Provides basic git version control operations including checking repository
-  status, staging files, committing changes, and viewing diffs. Wraps the
-  `git` CLI directly and returns raw command output.
+  status, staging files, committing changes, viewing diffs, and restoring
+  files. Wraps the `git` CLI directly and returns raw command output.
   Triggers: "git status", "stage this file", "commit these changes", "show me the diff",
-  "what changed", "is this staged", "add to git", "check repo status".
+  "what changed", "is this staged", "add to git", "check repo status",
+  "discard changes", "unstage this file", "revert this file", "restore this file".
   Do NOT use for generic file reading/writing/deletion, remote operations
   (push, pull, clone, fetch), branch management, merge/rebase, or any git
   command not explicitly listed below.
@@ -14,6 +15,7 @@ tools:
   - git_add
   - git_commit
   - git_diff
+  - git_restore
 ---
 ## Description
 A collection of utility functions for interacting with a local git repository via subprocess calls to the `git` CLI. Each tool operates on a specified working directory and returns the raw stdout/stderr from the underlying git command, unmodified, so it should be read directly rather than re-interpreted.
@@ -47,10 +49,26 @@ Shows the diff of a file using `git diff`.
   * `file_path` (`str`): The path of the file to diff, relative to `cwd_path`.
 * **Returns:** `tuple[bool, str]` — `(True, output)` on success, where output is the unified diff (`+`/`-` prefixed lines). An empty string means no diff (file unchanged, or already staged). `(False, error_message)` on failure.
 ---
+### 5. `git_restore`
+Restores a file's contents using `git restore`, discarding local changes according to the flags passed in.
+* **Parameters:**
+  * `cwd_path` (`str`): The working directory of the git repository.
+  * `file_path` (`str`): The path of the file to restore, relative to `cwd_path`.
+  * `args` (`list[str]`): Additional flags inserted before `file_path` on the command line. Common values:
+    * `--staged` / `-S`: restore the index (unstage) instead of the working tree.
+    * `--worktree` / `-W`: restore the working tree (default target if neither this nor `--staged` is given).
+    * `--source=<commit>` / `-s <commit>`: restore from a specific commit instead of the default source.
+    * `--ours` / `--theirs`: restore from a specific side of an unresolved merge conflict.
+    * Pass an empty list for default behavior (restore working tree from the index).
+* **Returns:** `tuple[bool, str]` — `(True, output)` on success, where output is stdout from `git restore` (typically empty — no output means it worked). `(False, error_message)` on failure.
+* **Warning — destructive:** This is the one tool in this module that discards data rather than just reading it or moving it into the staging area. Restoring the working tree throws away uncommitted edits to that file with no undo via these tools. **Always run `git_diff` on the file first and show the user what will be lost before calling `git_restore` on the working tree.** This confirmation step is not needed for `--staged`-only restores, since that just unstages a file without touching its working-tree contents.
+* **Do not pass `-p`/`--patch`:** interactive hunk selection requires a live terminal and will hang or fail when run through a non-interactive subprocess call. If the user wants to restore only part of a file, read the diff yourself, tell them which hunks would be discarded, and let them confirm restoring the whole file, or handle it manually.
+---
 ## Usage Guidelines & Safeguards
 * **Failure modes:** All tools share the same three failure cases — `git` not found on PATH, a non-zero exit code from git (message includes git's own stderr), or a command timeout. Read the returned error message directly; it already tells you which of these occurred.
-* **Order of operations:** Check `git_status` before staging or committing, so you know what's actually changed and where. Use `git_diff` on a specific file before staging it if you want to confirm exactly what will be committed.
+* **Order of operations:** Check `git_status` before staging, committing, or restoring, so you know what's actually changed and where. Use `git_diff` on a specific file before staging or restoring it if you want to confirm exactly what will be committed or lost.
 * **Committing:** Only call `git_commit` once the relevant files have been staged with `git_add` — this module does not stage automatically, and does not support `git commit -a`.
+* **Restoring:** Never call `git_restore` on a file without working-tree changes without first checking `git_diff` and getting the user's confirmation, unless the call is strictly `--staged` (unstaging only). If the user says something ambiguous like "undo my changes to X", confirm whether they mean unstage (`--staged`) or fully discard (working tree) before acting, since these have very different consequences.
 * **One file, one add+commit cycle:** When the user asks you to commit multiple files, do NOT stage everything at once and write a single combined commit message. Handle each file individually in sequence — `git_diff` that one file if you are creating your own commit message, then `git_add` and `git_commit` it with a message specific to that file's actual change, before moving to the next file. Each file should end up as its own separate commit with its own tailored message, not lumped together, since a shared generic message loses the specificity of what each individual file's change actually was.
 * **Commit message tagging:** If you (Ame) were the one who modified, created, or deleted the changes being committed, prefix the commit message with `[ame]` so it's clear the commit was made by you rather than the user directly — e.g. `[ame] Fix off-by-one error in memory session loading`. If the user made the changes themselves and is just asking you to commit on their behalf, do NOT add the `[ame]` prefix — the commit should read as if the user wrote it. If the user provides an exact commit message and asks you to use it verbatim, use it exactly as given (still prepending `[ame] ` only if you were the one who made the change, never otherwise).
 * **Commit message format:** When you need to write the message yourself (the user didn't provide one), use `git_diff` to inspect what actually changed, then format it as `<verb> <target>: <short description>`:
@@ -60,4 +78,4 @@ Shows the diff of a file using `git diff`.
   * Examples: `refactored gui: split chat bubble sizing into a separate helper`, `deleted handler.py: removed unused legacy request handler`, `fixed memory_manager: corrected off-by-one in session loading`, `added git_operations: new skill for status/add/commit/diff`.
   * Keep it to one line under ~72 characters where possible; only add more detail below a blank line if the change genuinely needs it (e.g. touches multiple unrelated things — though ideally that should be split into separate commits instead).
   * This format applies whether or not the `[ame]` prefix is added — the prefix (if any) goes first, then the formatted message: `[ame] fixed handler.py: guarded against a None response`.
-* **Scope limits:** These tools only cover status, add, commit, and diff. Do not attempt to construct other git subcommands (push, pull, branch, merge, log, reset, etc.) through these functions — they are not general-purpose git wrappers.
+* **Scope limits:** These tools only cover status, add, commit, diff, and restore. Do not attempt to construct other git subcommands (push, pull, branch, merge, log, reset, checkout, etc.) through these functions — they are not general-purpose git wrappers.
