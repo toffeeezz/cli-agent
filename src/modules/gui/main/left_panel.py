@@ -3,12 +3,14 @@ from typing import final
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
+    QGridLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
+from modules.gui.webcam_panel import Webcam
 from modules.utils.qt_helper import scale_pixmap
 from modules.utils.resource import get_resource_fullpath
 
@@ -44,9 +46,11 @@ class LeftPanel(QWidget):
             self.cam_label.setStyleSheet("color: #7A4A63; font-size: 14px;")
             cam_container.setMaximumSize(320, 240)
 
-        cam_layout = QVBoxLayout()
+        self.webcam = Webcam()
+        cam_layout = QGridLayout()
         cam_layout.setContentsMargins(0, 0, 0, 0)
-        cam_layout.addWidget(self.cam_label)
+        cam_layout.addWidget(self.cam_label, 0, 0)
+        cam_layout.addWidget(self.webcam, 0, 0)
         cam_container.setLayout(cam_layout)
 
         layout.addWidget(cam_container, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -54,6 +58,8 @@ class LeftPanel(QWidget):
         # --- Menu buttons ---
         btn_specs = [
             ("toggleCamera", "📷  Toggle Camera"),
+            ("saveSession", "🔽️  Save Session"),
+            ("loadSession", "▶️ Load Session"),
             ("settingsBtn", "⚙️  Settings"),
             ("themeBtn", "🎨  Change Theme"),
             ("aboutBtn", "ℹ️  About"),
@@ -65,7 +71,6 @@ class LeftPanel(QWidget):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             layout.addWidget(btn)
 
-        # Spacer to push everything up
         layout.addStretch(1)
 
         self.setLayout(layout)
