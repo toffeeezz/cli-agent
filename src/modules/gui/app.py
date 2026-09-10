@@ -1,15 +1,13 @@
-import sys
 from typing import final
 
 from PyQt6.QtWidgets import (
-    QApplication,
     QHBoxLayout,
     QMainWindow,
     QWidget,
 )
 
-from modules.gui.chat_panel import ChatPanel
-from modules.gui.left_panel import LeftPanel
+from modules.gui.main.chat_panel import ChatPanel
+from modules.gui.main.left_panel import LeftPanel
 
 
 @final
