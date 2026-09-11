@@ -1,10 +1,13 @@
+from pathlib import Path
 from typing import final
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
+    QFileDialog,
     QGridLayout,
     QLabel,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -18,6 +21,13 @@ from modules.utils.resource import get_resource_fullpath
 @final
 class LeftPanel(QWidget):
     """Left side panel — webcam display + menu buttons."""
+
+    toggle_camera_clicked: pyqtSignal = pyqtSignal()
+    save_session_clicked: pyqtSignal = pyqtSignal(str)
+    load_session_clicked: pyqtSignal = pyqtSignal(bool, str)
+    settings_clicked: pyqtSignal = pyqtSignal()
+    theme_clicked: pyqtSignal = pyqtSignal()
+    about_clicked: pyqtSignal = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
@@ -57,20 +67,51 @@ class LeftPanel(QWidget):
 
         # --- Menu buttons ---
         btn_specs = [
-            ("toggleCamera", "📷  Toggle Camera"),
-            ("saveSession", "🔽️  Save Session"),
-            ("loadSession", "▶️ Load Session"),
-            ("settingsBtn", "⚙️  Settings"),
-            ("themeBtn", "🎨  Change Theme"),
-            ("aboutBtn", "ℹ️  About"),
+            ("toggleCamera", "📷  Toggle Camera", self.toggle_camera_clicked),
+            ("saveSession", "🔽️  Save Session", self._save_session),
+            ("loadSession", "▶️  Load Session", self._load_session),
+            ("settingsBtn", "⚙️  Settings", self.settings_clicked),
+            ("themeBtn", "🎨  Change Theme", self.theme_clicked),
+            ("aboutBtn", "ℹ️  About", self.about_clicked),
         ]
 
-        for obj_name, text in btn_specs:
+        for obj_name, text, func in btn_specs:
             btn = QPushButton(text)
             btn.setObjectName(obj_name)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.clicked.connect(func)
             layout.addWidget(btn)
 
         layout.addStretch(1)
 
         self.setLayout(layout)
+
+    def _load_session(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            None, "Save session as", "", "JSON Files (*.json)"
+        )
+        if not path:
+            return
+        if not Path(path).exists():
+            _ = QMessageBox.warning(
+                self, "File does not exist", "The selected file does not exist"
+            )
+            self.load_session_clicked.emit(False, "Selected file does not exist")
+        if not path.endswith(".json"):
+            _ = QMessageBox.warning(
+                self,
+                "Invalid file format",
+                "The selected file is not a valid json file",
+            )
+            self.load_session_clicked.emit(False, "Selected file is not a json format")
+        self.load_session_clicked.emit(True, path)
+
+    def _save_session(self) -> None:
+        path, _ = QFileDialog.getSaveFileName(
+            None, "Save session as", "session.json", "JSON Files (*.json)"
+        )
+        if not path:
+            return
+        if not path.endswith(".json"):
+            path += ".json"
+        self.save_session_clicked.emit(path)
