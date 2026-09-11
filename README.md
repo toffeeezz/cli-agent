@@ -20,7 +20,8 @@ src/
     ├── cli/              # Terminal UI stuff. Pretty colors via rich
     ├── config/           # Pydantic config models so he doesn't have to hardcode everything
     ├── utils/            # Logging, resource path resolution, Qt helper utilities
-    ├── gui/              # PyQt6-based graphical interface — left panel + chat panel
+    ├── gui/              # PyQt6-based graphical interface
+    │   └── main/         # Left panel + chat panel + webcam panel
     ├── skill/            # The modular skill system — pool, registry, execution
     │   ├── file/         # File system operations skill (read, write, list, delete with sandboxing)
     │   └── git/          # Git operations skill (status, add, commit, diff, restore)
@@ -54,13 +55,16 @@ The graphical interface he said was "coming" is here now, and he's probably stil
 
 ```
 modules/gui/
-├── app.py            # MainWindow — left panel + chat panel layout
-├── chat_panel.py     # Right-side chat area with markdown rendering, code highlighting
-├── left_panel.py     # Left-side panel — webcam display placeholder + menu buttons
+├── app.py                # MainWindow — left panel + chat panel layout
+└── main/
+    ├── chat_panel.py     # Right-side chat area with markdown rendering, code highlighting
+    ├── left_panel.py     # Left-side panel — webcam display + menu buttons with signals
+    └── webcam_panel.py   # Animated Ame widget — switches between idle/typing gifs
 ```
 
 - **Chat panel** — renders messages with markdown (via the `markdown` library) and Pygments syntax highlighting. Messages auto-size based on content width so they don't stretch across the whole window. Send with Enter, Shift+Enter for new lines.
-- **Left panel** — webcam/stream area placeholder (loads a static image for now), plus toggle camera, settings, theme, and about buttons. He'll wire them up eventually.
+- **Left panel** — webcam/stream area plus toggle camera, save/load session, settings, theme, and about buttons. Now wired up with `pyqtSignal` connections and file dialog integration.
+- **Webcam panel** — a dedicated `QWidget` that displays animated Ame gifs (`ame-sleepy.webp` when idle, `ame-texting.webp` when typing) and switches between them via a `State` enum.
 - **Main window** — 1200x900, horizontal split layout. Nothing fancy, but it works.
 
 ### Memory System
