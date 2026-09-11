@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ChatPanel(QWidget):
     """Right-side panel: chat messages + text input."""
 
-    user_msg_sent = pyqtSignal(str)
+    user_msg_sent: pyqtSignal = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -122,16 +122,17 @@ class ChatPanel(QWidget):
         self.add_message(text, is_user=True)
         self.message_input.clear()
 
-        first_item = self.message_layout.itemAt(0)
-        if first_item is not None:
-            w = first_item.widget()
-            if w and w.objectName() == "chatPlaceholder":
-                w.deleteLater()
         self.user_msg_sent.emit(text)
 
     # [ame] refactored: build rendered HTML first, pass it to both probe and bubble,
     #                 moved ensurePolished after setHtml, fixed _measure_natural_width
     def add_message(self, text: str, is_user: bool = False) -> None:
+
+        first_item = self.message_layout.itemAt(0)
+        if first_item is not None:
+            w = first_item.widget()
+            if w and w.objectName() == "chatPlaceholder":
+                w.deleteLater()
 
         bubble = QTextBrowser()
         bubble.setObjectName("userMessage" if is_user else "botMessage")
