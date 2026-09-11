@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import (
@@ -39,6 +40,7 @@ from modules.core.server.models import (
     ToolCall,
 )
 from modules.core.server.server import Server
+from modules.errors import ProgramError
 from modules.skill.models import ToolResult
 from modules.skill.pool import SKILL_ENTRIES
 from modules.skill.registry import SkillRegistry
@@ -74,13 +76,23 @@ class Agent:
             self.skill_registry.registered_skills.keys()
         )
 
-    def load_session(self, session: MemorySession) -> None:
+    def load_session(self, path: str) -> None:
+        logger.info(f"Loading session from: {path}")
+        path: Path = Path(path)
+        if not path.exists():
+            logger.warning("Failed to load session: File does not exist")
+            return
+        try:
+            session = MemorySession.model_validate_json(path.read_text())
+            logger.info(f"The loaded session format was: {session}")
+        except ValidationError as e:
+            raise ProgramError(f"Failed to load session. Invalid format: {e}")
         self.skill_registry.registered_skills.clear()
 
         for skill_name in session.registered_skills:
             success, _ = self.skill_registry.register_skill(skill_name)
             logger.info(
-                f"The {skill_name} skill was loaded with a success value of {success}."
+                f"The {skill_name} skill was loaded from session with a success value of {success}."
             )
 
         self._memory_manager.load_session(session)
