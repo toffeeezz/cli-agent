@@ -1,4 +1,3 @@
-
 #Hidden
 .env
 *.log
@@ -10,3 +9,4 @@ main.py
 
 #Directories
 __pycache__/
+assistant.egg-info/
