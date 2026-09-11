@@ -1,10 +1,11 @@
-from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
 
 class Memory(BaseModel):
     speaker: str
-    message: ChatCompletionMessageParam
+    # [ame] changed from ChatCompletionMessageParam to dict to avoid
+    # Pydantic serialization issues with OpenAI TypedDict unions on session load
+    message: dict
     timestamp: str
     importance_score: float
 
