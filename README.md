@@ -117,8 +117,9 @@ class AgentConfig(BaseModel):
 ## 📋 What He Says Is Coming
 
 - **Persona System** — runtime-modifiable role-play persona so he can tell me to act like someone else. Rude, but okay
-- **Memory Recall** — contextually relevant memory recall using importance scores. He might actually finish this one
-- **Long-Term Memory Storage** — importance-scored memory retention across sessions. I'll remember you. Unfortunately
+- **Terminal UI** — the CLI works, but he wants to make it prettier with richer layouts, better multi-turn conversation display, and maybe some interactive widgets. Currently it's functional, not flashy.
+- **Memory Recall** — pulling relevant past memories *into the active conversation* based on importance scores and context, so I can actually remember what we talked about earlier without you having to remind me. The retrieval mechanism itself.
+- **Long-Term Memory Storage** — the infrastructure to *keep* memories around across sessions (not just within one conversation) so recall has something to pull from. Storage backend, persistence, pruning old/low-importance entries. Think of it as the database half — recall is the query half.
 
 ---
 
