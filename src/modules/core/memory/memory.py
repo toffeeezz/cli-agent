@@ -1,9 +1,12 @@
 import asyncio
 import datetime
+import logging
 
 from openai.types.chat import ChatCompletionMessageParam
 
 from modules.core.memory.models import Memory, MemorySession
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryManager:
@@ -13,9 +16,8 @@ class MemoryManager:
         self.current_session = session
 
     def load_session(self, session: MemorySession) -> None:
-        del self.current_session.memories[1:]
-        self.current_session.memories.extend(session.memories)
-        self.current_session.start_date = session.start_date
+        self.current_session = session
+        logger.info(f"Loaded a session. New memories:\n{self.messages}")
 
     async def save_session(self, path: str) -> None:
         await asyncio.to_thread(self._write_session, path)
