@@ -1,13 +1,18 @@
+import asyncio
+import base64
 import datetime
 import json
 import logging
 from collections.abc import AsyncGenerator
 from pathlib import Path
+import mimetypes
 
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
+    ChatCompletionContentPartParam,
+    ChatCompletionContentPartTextParam,
     ChatCompletionMessageFunctionToolCall,
     ChatCompletionMessageParam,
     ChatCompletionMessageToolCallUnion,
@@ -16,6 +21,9 @@ from openai.types.chat import (
 from openai.types.chat.chat_completion_chunk import (
     ChoiceDeltaToolCall,
     ChoiceDeltaToolCallFunction,
+)
+from openai.types.chat.chat_completion_content_part_image_param import (
+    ChatCompletionContentPartImageParam,
 )
 from openai.types.chat.chat_completion_message_tool_call import Function
 from pydantic import ValidationError
@@ -100,14 +108,54 @@ class Agent:
     async def save_session(self, path: str) -> None:
         await self._memory_manager.save_session(path)
 
+    def _img_to_b64(self, image_url: str) -> str:
+        with open(image_url, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+
+    def _get_image_mime_type(self, image_path: str) -> str:
+        mime_type, _ = mimetypes.guess_type(image_path)
+        if mime_type is None or not mime_type.startswith("image/"):
+            raise ValueError(
+                f"Could not determine a valid image MIME type for: {image_path}"
+            )
+        return mime_type
+
     async def generate_response(
-        self, name: str, prompt: str, config: AgentConfig
+        self,
+        name: str,
+        prompt: str,
+        config: AgentConfig,
+        image_urls: list[str] | None = None,
     ) -> AsyncGenerator[AgentEvent]:
-        user_prompt: ChatCompletionMessageParam = {
-            "role": "user",
-            "name": name,
-            "content": f"[{name}]: {prompt.strip()}",
-        }
+        prompt = f"[{name}]: {prompt.strip()}"
+        if not image_urls:
+            user_prompt: ChatCompletionMessageParam = {
+                "role": "user",
+                "name": name,
+                "content": prompt,
+            }
+        else:
+            logger.info("Recieved an image in prompt")
+            content: list[ChatCompletionContentPartParam] = []
+            text_param: ChatCompletionContentPartTextParam = {
+                "type": "text",
+                "text": prompt,
+            }
+            content.append(text_param)
+            for image_url in image_urls:
+                b64_data = await asyncio.to_thread(self._img_to_b64, image_url)
+                mime_type = self._get_image_mime_type(image_url)
+                image_param: ChatCompletionContentPartImageParam = {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:{mime_type};base64,{b64_data}"},
+                }
+                content.append(image_param)
+            user_prompt: ChatCompletionMessageParam = {
+                "role": "user",
+                "name": name,
+                "content": content,
+            }
+
         self._memory_manager.add_message(user_prompt)
         loop_count: int = 1
         while loop_count <= config.max_loops:
