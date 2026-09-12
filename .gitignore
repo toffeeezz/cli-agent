@@ -4,9 +4,6 @@
 *.ruff_cache
 *.json
 
-#Files
-main.py
-
 #Directories
 __pycache__/
 assistant.egg-info/
