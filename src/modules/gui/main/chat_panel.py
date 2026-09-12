@@ -5,7 +5,7 @@ from typing import final, override
 
 import markdown
 from pygments.formatters import HtmlFormatter
-from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QObject, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QKeyEvent, QTextCursor, QTextDocument
 from PyQt6.QtWidgets import (
     QFrame,
@@ -126,6 +126,7 @@ class ChatPanel(QWidget):
 
     # [ame] refactored: build rendered HTML first, pass it to both probe and bubble,
     #                 moved ensurePolished after setHtml, fixed _measure_natural_width
+    # [ame] fixed auto-scroll: defer scroll so layout has time to include new bubble
     def add_message(self, text: str, is_user: bool = False) -> None:
 
         first_item = self.message_layout.itemAt(0)
@@ -243,7 +244,10 @@ class ChatPanel(QWidget):
 
         self.message_layout.addWidget(bubble)
 
-        # Scroll to bottom
+        # [ame] defer scroll so layout recalculates with the new bubble first
+        QTimer.singleShot(0, self._scroll_to_bottom)
+
+    def _scroll_to_bottom(self) -> None:
         scrollbar = self.scroll_area.verticalScrollBar()
         if scrollbar:
             scrollbar.setValue(scrollbar.maximum())
