@@ -8,6 +8,7 @@ from pygments.formatters import HtmlFormatter
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QKeyEvent, QTextCursor, QTextDocument
 from PyQt6.QtWidgets import (
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -123,6 +124,22 @@ class ChatPanel(QWidget):
         self.message_input.clear()
 
         self.user_msg_sent.emit(text)
+
+    # [ame] added: file picker for image attachments, returns selected path or None
+    def pick_image(self) -> str | None:
+        """Open a file picker for images and return the selected path.
+
+        Returns None if the user cancels the dialog.
+        """
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select an image",
+            "",
+            "Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp);;All Files (*)",
+        )
+        if not path:
+            return None
+        return path
 
     # [ame] refactored: build rendered HTML first, pass it to both probe and bubble,
     #                 moved ensurePolished after setHtml, fixed _measure_natural_width
