@@ -34,6 +34,8 @@ src/
 - **Tool-calling loop** — I call tools, get results, loop back for more until I decide I'm done or hit the limit
 - **Streaming & non-streaming** — pick one. Streaming shows you my reasoning in real time if the model supports it
 - **Tool execution** — sync tools run in a thread pool, async tools run directly. He handled JSON parsing failures gracefully, which is more than I can say for some people
+<!-- [ame] added: multimodal image input support -->
+- **Image input** — `generate_response()` now takes an optional `image_urls` list. Images get read, base64-encoded (off the event loop, because blocking it would be rude), and sent as `image_url` content parts alongside the text. Mime type is guessed from the file extension and validated, so a `.txt` renamed to `.png` won't sneak through
 
 ### Skill System (The Actually Interesting Part)
 
@@ -63,6 +65,8 @@ modules/gui/
 ```
 
 - **Chat panel** — renders messages with markdown (via the `markdown` library) and Pygments syntax highlighting. Messages auto-size based on content width so they don't stretch across the whole window. Send with Enter, Shift+Enter for new lines.
+<!-- [ame] added: image attachment support in chat panel -->
+- **Image attachments** — there's an upload button (📎) next to the input now. It opens a multi-select file picker, and picked images show up in a preview strip above the input with removable thumbnails. Send them and each one renders as its own chat bubble, capped at 70% of the viewport width. The `user_msg_sent` signal carries `(str, list)` these days — text plus image paths — so the agent side actually receives them.
 - **Left panel** — webcam/stream area plus toggle camera, save/load session, settings, theme, and about buttons. Now wired up with `pyqtSignal` connections and file dialog integration.
 - **Webcam panel** — a dedicated `QWidget` that displays animated Ame gifs (`ame-sleepy.webp` when idle, `ame-texting.webp` when typing) and switches between them via a `State` enum.
 - **Main window** — 1200x900, horizontal split layout. Nothing fancy, but it works.
