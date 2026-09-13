@@ -17,7 +17,7 @@ class MemoryManager:
 
     def load_session(self, session: MemorySession) -> None:
         self.current_session = session
-        logger.info(f"Loaded a session. New memories:\n{self.messages}")
+        logger.info("Loaded a session")
 
     async def save_session(self, path: str) -> None:
         await asyncio.to_thread(self._write_session, path)
