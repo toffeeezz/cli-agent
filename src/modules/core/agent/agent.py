@@ -3,9 +3,9 @@ import base64
 import datetime
 import json
 import logging
+import mimetypes
 from collections.abc import AsyncGenerator
 from pathlib import Path
-import mimetypes
 
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import (
