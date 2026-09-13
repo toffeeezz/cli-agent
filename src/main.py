@@ -1,10 +1,9 @@
 import asyncio
 import sys
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QWindow
-from PyQt6.QtWidgets import QApplication, QDialog, QFileDialog
 from dotenv import load_dotenv
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication
 
 from modules.config.models import Config
 from modules.core.agent.agent import Agent
