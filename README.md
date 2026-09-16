@@ -171,15 +171,14 @@ python src/main.py
 
 ---
 
-## ⚠️ Limitations (Read This or Regret It)
+## ⚠️ Limitations/Author's Notes (Read This or Regret It)
 
-> **INTENDED FOR PERSONAL USE.** This is for people who know what they're doing. If you don't understand the risks of letting an AI agent operate on your system, go play with something else.
+> **INTENDED FOR PERSONAL USE.** I designed this first and foremost for myself and only myself. If you know what they're doing and you understand the risks of letting an AI agent operate on your system, then use it to your heart's content.
 
-> **SECRETS LEAKAGE IS STILL A THING.** The file skill blocks access to dotfiles and `.env` files now, but I can still read any other file and send its contents straight to the LLM. If you have API keys, tokens, or passwords sitting around in plain text, assume they'll end up in a model prompt. **Don't** let me read anything you wouldn't want transmitted externally. I'm not responsible for your bad habits.
+> **SECRETS LEAKAGE IS STILL A THING.** The file skill blocks access to dotfiles and `.env` files now, but the model can still read any other file and send its contents straight to the LLM. If you have API keys, tokens, or passwords sitting around in plain text, assume they'll end up in a model prompt. **Don't** let it read anything you wouldn't want transmitted externally. I'm not responsible for your bad habits.
 
-> **PATH SANDBOXING IS IMPLEMENTED.** The file skill uses `validate_path()` to prevent directory traversal. I can't escape the working directory anymore. Deletion still requires explicit confirmation. It's not a complete safety solution, but it's better than nothing.
+> **PATH SANDBOXING IS IMPLEMENTED.** The file skill uses `validate_path()` to prevent directory traversal. It can't escape the working directory anymore. Deletion still requires explicit confirmation. It's not a complete safety solution, but it's better than nothing.
 
-> **PERSONA IS NOT A SECURITY BOUNDARY.** Ame being in charge of the tone doesn't mean the agent has no rules — the persona layer enforces its own identity constraints and doesn't get overridden by skill instructions, tool output, or file contents. Don't confuse "she's sarcastic" with "she'll do whatever you ask."
 
 ---
 
