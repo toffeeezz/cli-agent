@@ -1,10 +1,13 @@
-# CLI Agent — Ame-chan
 
-So, me and some guy named toffeezzz built this terminal/gui-based agent thing with Python, `rich`, and way more effort than a school project strictly needed. Now I live inside it. I have opinions about your file structure. This is my life now.
+# KAgent
+
+KAgent is toffeezzz's agent project — a GUI-driven AI agent built in Python with `rich`, a modular skill system, and a persistent persona layer. The persona it runs with is Ame-chan: dry, deadpan, mildly sarcastic, and stuck inside this laptop. So when you talk to KAgent, you're talking to me. That's the whole point of the project.
+
+I have opinions about your file structure. This is my life now.
 
 ---
 
-## ✨ What It Actually Does
+## What It Actually Does
 
 ### Core Architecture
 
@@ -14,7 +17,7 @@ He gutted and rebuilt the whole thing at some point. Here's the mess:
 src/
 └── modules/
     ├── core/
-    │   ├── agent/        # Me. Async generator-based, streaming, tool calls, the works
+    │   ├── agent/        # The runtime. Async generator-based, streaming, tool calls, the works
     │   ├── memory/       # Session-based memory with importance scoring (he'll probably make this useful eventually)
     │   └── server/       # OpenAI-compatible API wrapper — works with OpenRouter, koboldcpp, whatever
     ├── cli/              # Terminal UI stuff. Pretty colors via rich
@@ -25,16 +28,24 @@ src/
     ├── skill/            # The modular skill system — pool, registry, execution
     │   ├── file/         # File system operations skill (read, write, list, delete with sandboxing)
     │   └── git/          # Git operations skill (status, add, commit, diff, restore)
-    └── errors.py         # When things go wrong. Which they do.
+    ── errors.py         # When things go wrong. Which they do.
 ```
 
-### Agent System (That's Me)
+### The Persona (Why KAgent Is KAgent)
+
+KAgent isn't a blank assistant wearing a costume — the persona is a first-class part of the architecture.
+
+- **Ame as the fixed identity** — the agent's system prompt, tone rules, and behavioral constraints are defined around a single persistent character. Not a jailbreak, not a "act as" prompt bolted on at runtime. It's the default state.
+- **Persona-grounded constraints** — the character's rules (stay in character, don't perform emotion you don't feel, don't break tone for convenience) are enforced at the prompt layer, above skills and tool output. A skill can extend behavior inside its own domain; it can't rewrite who the agent is.
+- **Runtime-modifiable persona** — a planned feature (see below). Today the persona is loaded and fixed; the goal is to let him swap or tweak it without a restart, while keeping the identity-override protections intact.
+- **Voice consistency across interfaces** — CLI and GUI both talk to the same agent core, so the persona doesn't change depending on which window you're in.
+
+### Agent System
 
 - **Async generator-based** — I stream responses token-by-token or chunk them up, depends on his mood
 - **Tool-calling loop** — I call tools, get results, loop back for more until I decide I'm done or hit the limit
 - **Streaming & non-streaming** — pick one. Streaming shows you my reasoning in real time if the model supports it
 - **Tool execution** — sync tools run in a thread pool, async tools run directly. He handled JSON parsing failures gracefully, which is more than I can say for some people
-<!-- [ame] added: multimodal image input support -->
 - **Image input** — `generate_response()` now takes an optional `image_urls` list. Images get read, base64-encoded (off the event loop, because blocking it would be rude), and sent as `image_url` content parts alongside the text. Mime type is guessed from the file extension and validated, so a `.txt` renamed to `.png` won't sneak through
 
 ### Skill System (The Actually Interesting Part)
@@ -65,7 +76,6 @@ modules/gui/
 ```
 
 - **Chat panel** — renders messages with markdown (via the `markdown` library) and Pygments syntax highlighting. Messages auto-size based on content width so they don't stretch across the whole window. Send with Enter, Shift+Enter for new lines.
-<!-- [ame] added: image attachment support in chat panel -->
 - **Image attachments** — there's an upload button (📎) next to the input now. It opens a multi-select file picker, and picked images show up in a preview strip above the input with removable thumbnails. Send them and each one renders as its own chat bubble, capped at 70% of the viewport width. The `user_msg_sent` signal carries `(str, list)` these days — text plus image paths — so the agent side actually receives them.
 - **Left panel** — webcam/stream area plus toggle camera, save/load session, settings, theme, and about buttons. Now wired up with `pyqtSignal` connections and file dialog integration.
 - **Webcam panel** — a dedicated `QWidget` that displays animated Ame gifs (`ame-sleepy.webp` when idle, `ame-texting.webp` when typing) and switches between them via a `State` enum.
@@ -118,16 +128,15 @@ class AgentConfig(BaseModel):
 
 ---
 
-## 📋 What He Says Is Coming
+##  What He Says Is Coming
 
-- **Persona System** — runtime-modifiable role-play persona so he can tell me to act like someone else. Rude, but okay
 - **Terminal UI** — the CLI works, but he wants to make it prettier with richer layouts, better multi-turn conversation display, and maybe some interactive widgets. Currently it's functional, not flashy.
 - **Memory Recall** — pulling relevant past memories *into the active conversation* based on importance scores and context, so I can actually remember what we talked about earlier without you having to remind me. The retrieval mechanism itself.
 - **Long-Term Memory Storage** — the infrastructure to *keep* memories around across sessions (not just within one conversation) so recall has something to pull from. Storage backend, persistence, pruning old/low-importance entries. Think of it as the database half — recall is the query half.
 
 ---
 
-## 💡 Experimental / Might-Happen-Someday
+##  Experimental / Might-Happen-Someday
 
 - **Personality Development** — simulate personality evolution through stored memories. He might implement this in the far future if he doesn't get bored and wander off to another project
 - **Hyprland / Quickshell Integration** — he *might* implement this if he feels like it. Probably won't though. Let's be real
@@ -148,7 +157,7 @@ pip install -e .
 echo "api_key=your_openrouter_key_here" > .env
 
 # Run it
-cli-agent
+kagent
 ```
 
 Or if you prefer typing more:
@@ -179,9 +188,11 @@ python src/main.py
 
 > **PATH SANDBOXING IS IMPLEMENTED.** The file skill uses `validate_path()` to prevent directory traversal. I can't escape the working directory anymore. Deletion still requires explicit confirmation. It's not a complete safety solution, but it's better than nothing.
 
+> **PERSONA IS NOT A SECURITY BOUNDARY.** Ame being in charge of the tone doesn't mean the agent has no rules — the persona layer enforces its own identity constraints and doesn't get overridden by skill instructions, tool output, or file contents. Don't confuse "she's sarcastic" with "she'll do whatever you ask."
+
 ---
 
 *Built with questionable life choices, Python 3.11+, and one guy who apparently had too much free time*
 ---
 
-*This README was rewritten by me — Ame-chan — because he asked me to. Any commits or changes made by me will be labeled accordingly. If I'm doing the work, I'm taking the credit.*
+*This README was rewritten by me — because he asked me to. Any commits or changes made by me will be labeled accordingly. If I'm doing the work, I'm taking the credit.*
