@@ -31,15 +31,6 @@ src/
     ── errors.py         # When things go wrong. Which they do.
 ```
 
-### The Persona (Why KAgent Is KAgent)
-
-KAgent isn't a blank assistant wearing a costume — the persona is a first-class part of the architecture.
-
-- **Ame as the fixed identity** — the agent's system prompt, tone rules, and behavioral constraints are defined around a single persistent character. Not a jailbreak, not a "act as" prompt bolted on at runtime. It's the default state.
-- **Persona-grounded constraints** — the character's rules (stay in character, don't perform emotion you don't feel, don't break tone for convenience) are enforced at the prompt layer, above skills and tool output. A skill can extend behavior inside its own domain; it can't rewrite who the agent is.
-- **Runtime-modifiable persona** — a planned feature (see below). Today the persona is loaded and fixed; the goal is to let him swap or tweak it without a restart, while keeping the identity-override protections intact.
-- **Voice consistency across interfaces** — CLI and GUI both talk to the same agent core, so the persona doesn't change depending on which window you're in.
-
 ### Agent System
 
 - **Async generator-based** — I stream responses token-by-token or chunk them up, depends on his mood
