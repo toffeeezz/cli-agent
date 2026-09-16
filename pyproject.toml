@@ -16,7 +16,7 @@ dependencies = [
   "markdown",
   "pyqt6",
   "PyMuPDF",
-  "frontmatter",
+  "python-frontmatter",
 ]
 
 [tool.setuptools.packages.find]
