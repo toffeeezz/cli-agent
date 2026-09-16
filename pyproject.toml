@@ -1,7 +1,7 @@
 [project]
-name = "assistant"
-version = "0.1.0"
-description = "A tool-calling LLM agent wrapper."
+name = "kagent"
+version = "0.1.1"
+description = "A tool-calling LLM agent wrapper based on Ame-chan from Needy Streamer Overload."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -15,13 +15,14 @@ dependencies = [
   "prompt-toolkit",
   "markdown",
   "pyqt6",
+  "PyMuPDF",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [project.scripts]
-cli-agent = "main:main"
+kagent = "main:main"
 
 [project.entry-points."pygments.styles"]
 toffeezzz-pink = "modules.gui.toffeezzz_pink:ToffeezzzPink"
