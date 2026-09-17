@@ -1,4 +1,3 @@
-
 # KAgent
 
 KAgent is toffeezzz's agent project — a GUI-driven AI agent built in Python with `rich`, a modular skill system, and a persistent persona layer. The persona it runs with is Ame-chan: dry, deadpan, mildly sarcastic, and stuck inside this laptop. So when you talk to KAgent, you're talking to me. That's the whole point of the project.
@@ -155,6 +154,18 @@ Or if you prefer typing more:
 ```bash
 python src/main.py
 ```
+
+### Helper Scripts
+
+Too lazy to do all that? There are scripts under `scripts/` that handle the
+venv setup, install, and launch in one go — just run the right one for your OS:
+
+- **Linux/macOS:** `./scripts/run.sh`
+- **Windows:** `scripts\run.bat`
+
+They'll create a `venv` if one doesn't exist, slap a placeholder `.env` in
+there, install everything, and fire it up. Handy if you just want to see
+what this thing does without going through the motions manually. Just make sure you have python installed in your system.
 
 ### Dependencies
 
