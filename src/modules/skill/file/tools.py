@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pymupdf4llm
+import pymupdf
 from send2trash import send2trash
 
 
@@ -11,7 +13,12 @@ def validate_path(target: str) -> tuple[bool, str]:
     - (False, denial_message) on failure (escape attempt)
     """
     root_dir_path = Path.cwd().resolve()
-    target_path = (root_dir_path / target.lstrip("/\\")).resolve()
+
+    target_path = Path(target)
+    if target_path.is_absolute():
+        target_path = target_path.resolve()
+    else:
+        target_path = (root_dir_path / target).resolve()
 
     if not target_path.is_relative_to(root_dir_path):
         return (
@@ -29,8 +36,9 @@ def read_file(path: str) -> tuple[bool, str]:
     answering questions about what it contains. Echo it back to the user if they ask what's in it. Fails if the file does not
     exist or cannot be read due to permissions.
     """
+
+    success, target_str = validate_path(path)
     try:
-        success, target_str = validate_path(path)
         if not success:
             return False, target_str
         target = Path(target_str)
@@ -42,13 +50,41 @@ def read_file(path: str) -> tuple[bool, str]:
         content = target.read_text(encoding="utf-8")
         return True, f"The content of the file is: {content}"
     except FileNotFoundError:
-        return False, "File does not exist"
+        return False, f"File does not exist: {target_str}"
     except PermissionError:
-        return False, f"Permission not allowed trying to access '{path}'"
+        return False, f"Permission not allowed trying to access '{target_str}'"
     except IsADirectoryError:
         return False, f"'{path}' is a directory, not a file"
     except UnicodeDecodeError:
         return False, "File is not valid UTF-8 text (likely a binary file)"
+
+
+def read_document(path: str) -> tuple[bool, str]:
+    """Reads the text of a pdf/docx file and returns the contents of it in a markdown format.
+
+    Use this to inspect a PDF/docx contents before editing, summarizing, or
+    answering questions about what it contains. Echo it back to the user if they ask what's in it. Fails if the file does not
+    exist or cannot be read due to permissions.
+    """
+    success, target_str = validate_path(path)
+    try:
+        if not success:
+            return False, target_str
+        target = Path(target_str)
+        if target.suffix != ".pdf" and target.suffix != ".docx":
+            return (False, "File is not a valid PDF format")
+        text = pymupdf4llm.to_markdown(target, page_chunks=False)
+        if not isinstance(text, str):
+            return (
+                False,
+                f"The content was a list instead of a string. Not an error, but a bug: {text}",
+            )
+    except pymupdf.FileNotFoundError:
+        return False, "File does not exist"
+    except PermissionError:
+        return False, f"Permission not allowed trying to access '{target_str}'"
+
+    return True, text
 
 
 # WARNING: This overwrites existing file.
