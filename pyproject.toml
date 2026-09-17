@@ -17,6 +17,7 @@ dependencies = [
   "pyqt6",
   "PyMuPDF",
   "python-frontmatter",
+  "pymupdf4llm",
 ]
 
 [tool.setuptools.packages.find]
