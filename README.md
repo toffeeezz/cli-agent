@@ -155,8 +155,6 @@ Or if you prefer typing more:
 python src/main.py
 ```
 
-### Helper Scripts
-
 Too lazy to do all that? There are scripts under `scripts/` that handle the
 venv setup, install, and launch in one go — just run the right one for your OS:
 
