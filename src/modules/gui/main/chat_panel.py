@@ -319,7 +319,9 @@ class ChatPanel(QWidget):
             )
 
         # Build rendered HTML first so we can measure it properly
-        html_content = markdown.markdown(text, extensions=["fenced_code", "codehilite"])
+        html_content = markdown.markdown(
+            text, extensions=["fenced_code", "codehilite", "tables"]
+        )
         html_content = re.sub(
             r'(<div class="codehilite">.*?</div>)',
             r'<table cellpadding="8" cellspacing="0" width="100%" '
@@ -416,4 +418,3 @@ class ChatPanel(QWidget):
         probe.setHtml(f"<html><body>{html_content}</body></html>")
         probe.setTextWidth(-1)
         return math.ceil(probe.idealWidth()) + 2
-
