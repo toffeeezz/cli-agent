@@ -266,19 +266,21 @@ class ChatPanel(QWidget):
         document.setDocumentMargin(0)
         document.setDefaultFont(bubble.font())
 
-        CODE_BLOCK_CSS = HtmlFormatter(style="emacs").get_style_defs(".codehilite")
+        # Dracula-style highlighting reads well against the dark accent
+        # background used below for code blocks (#3A1729, same as QToolTip).
+        CODE_BLOCK_CSS = HtmlFormatter(style="dracula").get_style_defs(".codehilite")
 
         GLOBAL_STYLE = f"""
         QScrollArea {{
-            background-color: #1e1e1e;
+            background-color: #F3B8D2;
             border: none;
         }}
         QWidget#chatContainer {{
-            background-color: #1e1e1e;
+            background-color: #F3B8D2;
         }}
         QTextBrowser {{
-            background-color: #2d2d2d;
-            color: #ffffff;
+            background-color: #FFFFFF;
+            color: #3A1729;
             border-radius: 10px;
             padding: 10px;
             border: none;
@@ -287,18 +289,33 @@ class ChatPanel(QWidget):
         {CODE_BLOCK_CSS}
         /* Style the overall <pre> container for the markdown code blocks */
         .codehilite {{
-            background-color: #1a1a1a;
+            background-color: #3A1729;
             border-radius: 6px;
             padding: 8px;
             display: block;
         }}
         .codehilite pre {{
-            color: #f8f8f2;
+            color: #FFF5F8;
             padding: 8px;
             border-radius: 5px;
             font-family: 'Courier New', Courier, monospace;
             font-size: 13px;
             overflow-x: auto;
+        }}
+        /* Markdown tables */
+        table {{
+            width: 100%;
+            margin: 8px 0;
+        }}
+        table, th, td {{
+            border: 1px solid #F3B8D2;
+        }}
+        th, td {{
+            padding: 6px 10px;
+        }}
+        th {{
+            background-color: #FFD6E8;
+            color: #3A1729;
         }}
         """
 
@@ -325,7 +342,7 @@ class ChatPanel(QWidget):
         html_content = re.sub(
             r'(<div class="codehilite">.*?</div>)',
             r'<table cellpadding="8" cellspacing="0" width="100%" '
-            + r'style="background-color:#1a1a1a; border-radius:12px;">'
+            + r'style="background-color:#3A1729; border-radius:12px;">'
             + r"<tr><td>\1</td></tr></table>",
             html_content,
             flags=re.DOTALL,
