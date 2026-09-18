@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import pymupdf4llm
 import pymupdf
+import pymupdf4llm
 from send2trash import send2trash
 
 
