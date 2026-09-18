@@ -3,7 +3,13 @@
 *.log
 *.ruff_cache
 *.json
+*.db
 
 #Directories
 __pycache__/
-assistant.egg-info/
+*.egg-info/
+
+
+
+#files
+test.py
