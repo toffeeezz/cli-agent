@@ -17,86 +17,54 @@ tools:
 
 ## Description
 
-A collection of utility functions designed for file and directory management. All operations include strict path sandboxing (`validate_path`) to enforce working directory limits and prevent directory traversal vulnerabilities. Parameter names/types for each tool are defined in their own docstrings — this reference covers what each tool does, what its result actually means, and how it fits into a safe workflow.
+A collection of utility functions for file and directory management. All operations enforce strict path sandboxing (`validate_path`) to keep calls within the working directory and block directory traversal. Parameter names/types live in each tool's own schema — this reference covers what the schema can't: what a success/failure return actually means, and how the tools fit together safely.
 
 ---
 
-## Tool API Reference
+## Tool Reference
 
-### 1. `read_file`
-Reads and returns the full UTF-8 text contents of a file.
-* **Returns:** `(True, content_string)` on success, `(False, error_message)` on failure (e.g. file doesn't exist, not valid UTF-8, path outside sandbox).
-
----
-
-### 2. `write_file`
-Creates a new file or **completely overwrites** an existing one with the provided string.
-* **Returns:** `(True, "File Written Successfully")` on success, `(False, error_message)` on failure.
-* **Warning:** Destructive — this fully replaces existing contents with no diff or backup. There is no undo through this module. Use `append_file` instead when the goal is adding to a file rather than replacing it.
-
----
-
-### 3. `append_file`
-Appends content to the end of an existing file. The file must already exist.
-* **Returns:** `(True, "Lines appended successfully")` on success, `(False, error_message)` on failure (e.g. file doesn't exist — this tool won't create one; use `write_file` first).
-
----
-
-### 4. `make_dir`
-Creates a new directory.
-* **Returns:** `(True, "Directory successfully created")` on success, `(False, error_message)` on failure.
-
----
-
-### 5. `list_dir`
-Lists directory contents, showing name, type (`file`/`dir`), and size in bytes for each entry.
-* **Returns:** `(True, list_representation)` on success, `(False, error_message)` on failure (e.g. path doesn't exist or isn't a directory).
-
----
-
-### 6. `delete_file_or_dir`
-Moves a file or directory to the system trash via `send2trash` (recoverable, not a permanent delete).
-* **Returns:** `(True, success_message)` on success. `(False, prompt_or_error_message)` on failure or when confirmation is still pending.
-* **Note:** Calling this with `confirm` unset/`None` is the intended way to "dry run" it — read the returned message, it will tell you what's about to be deleted rather than deleting it.
-
----
-
-### 7. `read_document`
-Extracts and returns text content from a PDF, docx file.
-* **Returns:** `(True, text_content)` on success, `(False, error_message)` on failure (e.g. file isn't a valid PDF, or is a scanned/image-only PDF with no extractable text).
+| Tool | What it does | Return semantics / key warning |
+|---|---|---|
+| `read_file` | Reads full UTF-8 text of a file | Fails on non-UTF-8 content, missing file, or out-of-sandbox path. |
+| `write_file` | Creates or **fully overwrites** a file | **Destructive, no undo, no diff.** Use `append_file` instead unless the intent is genuinely "replace everything." |
+| `append_file` | Appends to an existing file | File must already exist — this tool never creates one; `write_file` first if it doesn't. |
+| `make_dir` | Creates a directory | Fails if the parent directory doesn't exist yet — check with `list_dir` on the parent first if that's uncertain. |
+| `list_dir` | Lists entries: name, type, size in bytes | Fails if the path doesn't exist or isn't a directory. |
+| `delete_file_or_dir` | Moves to system trash (`send2trash`) — recoverable | Call with `confirm` unset first as a dry run; the returned message describes what *would* be deleted without committing. |
+| `read_document` | Extracts text from PDF or docx | Fails on scanned/image-only PDFs with no extractable text layer, or a docx with no text runs (e.g. purely image-based content). |
 
 ---
 
 ## Usage Guidelines & Safeguards
 
-### Path Sandboxing
-All operations enforce `validate_path()`. Relative traversal attempts (`../`) outside the root directory raise a `PermissionError` — if a call fails this way, don't retry with a slightly different relative path hoping it'll slip through; tell the user the path is out of bounds.
+**Path sandboxing**
+`validate_path()` runs on every call. A traversal attempt (`../`) outside the root raises a `PermissionError` — if a call fails this way, don't retry with a slightly different relative path hoping it slips through. Tell the user the path is out of bounds.
 
-### Before writing or overwriting anything
-* If `write_file` is targeting a path that might already exist and matter (not clearly a scratch/temp file), call `read_file` on it first to see what's there before you overwrite it. If it holds something non-trivial and the user didn't explicitly say "overwrite" or "replace," confirm with them before proceeding.
-* If the goal is "add to" or "log" or "append" something, default to `append_file`, not `write_file`. Only use `write_file` when the intent is genuinely "replace everything" or the file is new.
+**Before writing or overwriting**
+* If `write_file` targets a path that might already hold something non-trivial, `read_file` it first. If it's not empty/trivial and the user didn't explicitly say "overwrite" or "replace," confirm before proceeding.
+* Default to `append_file` for anything framed as "add to," "log," or "append." Reserve `write_file` for genuinely new files or an explicit full replace.
 
-### After writing or appending — always verify
-Do not report a write/append as done just because the tool returned success. A success return means the syscall completed, not that the content is actually correct on disk:
-1. Call `read_file` on the path immediately after `write_file` or `append_file`.
-2. Compare what comes back against what you intended to write (content present, not truncated, no encoding artifacts).
-3. Only then tell the user the file was written/updated. If the read-back doesn't match what you expected, say so — don't paper over a mismatch or assume it's fine.
-* Skip the read-back only for trivial, low-stakes writes where the user is watching output live and would immediately notice a problem themselves (e.g. quick throwaway test files) — when in doubt, verify.
+**After writing or appending — always verify**
+A success return means the syscall completed, not that the content landed correctly:
+1. `read_file` the path immediately after `write_file`/`append_file`.
+2. Compare against what you intended — full content present, not truncated, no encoding artifacts.
+3. Only then report it as done. If the read-back doesn't match, say so — don't paper over a mismatch.
+* Skip the read-back only for trivial, low-stakes writes where the user is watching output live (quick throwaway test files). When in doubt, verify.
 
-### Before creating a directory
-* Consider `list_dir` on the parent path first if there's any chance the directory already exists or the parent path itself doesn't exist yet (relevant if you're calling with `parents=False`-equivalent behavior, or just want to give the user an accurate "created" vs. "already existed" answer).
+**Before creating a directory**
+`list_dir` the parent first if there's any chance it's missing or the target already exists — this also lets you tell the user "created" vs. "already existed" accurately instead of guessing.
 
-### Before deleting anything
-1. Call `delete_file_or_dir(path)` with `confirm` unset to find out what would be affected without committing to it.
-2. Inspect the target: `list_dir()` if it's a directory (know what's inside, not just that it exists), `read_file()` if it's a file whose contents might matter.
+**Before deleting anything**
+1. Call `delete_file_or_dir(path)` with `confirm` unset — dry run only.
+2. Inspect the target: `list_dir` if it's a directory (see what's inside, not just that it exists), `read_file` if it's a file whose contents might matter.
 3. Tell the user plainly what's about to be deleted, based on what you actually saw in step 2 — not a generic "deleting this file" line.
-4. Only call again with `confirm=True` after the user has explicitly said yes to what you described. A vague earlier "sure, clean that up" from several turns ago doesn't count as confirmation for a specific deletion happening now — reconfirm if the request wasn't specific to this exact path.
-5. After deletion, treat the success message as confirmation — don't call `list_dir` again just to double check unless the user asks, since trashing is already a soft/recoverable delete.
+4. Only call again with `confirm=True` after explicit yes to *that description*. A vague earlier "sure, clean that up" doesn't count as confirmation for a specific deletion now — reconfirm if the earlier request wasn't specific to this exact path.
+5. After deletion, the success message is sufficient confirmation — don't `list_dir` again to double-check unless asked; trashing is already soft/recoverable.
 
-### General ordering logic
-* Reads before writes when there's any ambiguity about existing state. Don't guess at what's in a file or directory — check.
-* Don't chain multiple mutating calls (e.g. `make_dir` then `write_file` then `append_file`) without confirming each step succeeded first. If step one fails, stop — don't proceed to step two assuming it worked.
-* If a call fails, read the actual error message before retrying. A sandbox violation, a missing parent directory, and a permissions error all look like "it failed" but need different fixes — don't retry blindly with the same arguments.
+**General ordering logic**
+* Read before you write whenever existing state is ambiguous — don't guess at file/directory contents, check.
+* Don't chain mutating calls (`make_dir` → `write_file` → `append_file`) without confirming each step succeeded. If step one fails, stop — don't assume it worked and proceed.
+* On failure, read the actual error message before retrying. A sandbox violation, a missing parent directory, and a permissions error all present as "it failed" but need different fixes — don't retry blindly with the same arguments.
 
-### Scope limits
-This module handles local file/directory CRUD and PDF text extraction only. It does not handle git operations, network/remote transfers, or binary formats other than PDF (e.g. don't attempt to `read_file` a `.xlsx` or other unsupported formats and expect meaningful output — those need their own dedicated tools).
+**Scope limits**
+Local file/directory CRUD and PDF/docx text extraction only. No git operations, no network/remote transfers, no other binary formats — don't `read_file` an `.xlsx` or similar and expect meaningful output; that needs its own dedicated tool.
