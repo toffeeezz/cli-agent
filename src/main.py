@@ -1,4 +1,6 @@
 import asyncio
+import json
+from pathlib import Path
 import sys
 
 from dotenv import load_dotenv
@@ -19,6 +21,9 @@ from modules.utils.config import setup_logging
 from modules.utils.qt_helper import clear_layout
 from modules.utils.resource import get_resource_fullpath
 
+
+CONFIG_PATH: Path = (Path(__file__).parent.parent / "saves/config.json").resolve()
+
 _ = load_dotenv()
 setup_logging()
 
@@ -27,12 +32,22 @@ def main():
     app = QApplication(sys.argv)
 
     style_sheet = get_resource_fullpath("css/style.qss")
-    agent = Agent(config=Config().agent)
+
+    print(CONFIG_PATH.exists())
+
+    if not CONFIG_PATH.exists():
+        config = Config()  # [ame] single config instance for the whole app
+        with open(CONFIG_PATH, "w") as file:
+            _ = file.write(config.model_dump_json(indent=4))
+    else:
+        with open(CONFIG_PATH, "r") as file:
+            config = Config.model_validate_json(CONFIG_PATH.read_text())
+    agent = Agent(config=config.agent)
     if style_sheet:
         with open(style_sheet, "r") as style:
             app.setStyleSheet(style.read())
 
-    window = MainWindow()
+    window = MainWindow(config=config)
     window.show()
 
     loop = asyncio.new_event_loop()
@@ -54,6 +69,12 @@ def main():
         )
     )
 
+    def on_config_changed():
+        nonlocal agent
+        agent = Agent(config=config.agent)
+
+    window.left_panel.config_changed.connect(on_config_changed)
+
     timer = QTimer()
     timer.setInterval(10)
 
@@ -67,6 +88,8 @@ def main():
     try:
         sys.exit(app.exec())
     finally:
+        with open(CONFIG_PATH, "w") as file:
+            _ = file.write(config.model_dump_json(indent=4))
         loop.close()
 
 
@@ -107,7 +130,7 @@ async def _send_prompt(
 ) -> None:
     try:
         agent_response = agent.generate_response(
-            "toffeezzz", text, Config().agent, image_urls or None
+            "toffeezzz", text, window.config.agent, image_urls or None
         )
         async for response in agent_response:
             if isinstance(response, GeneratingResponse):
@@ -124,8 +147,6 @@ async def _send_prompt(
 
     except ProgramError as e:
         print(f"Error occured: {e.message}")
-    except Exception as e:
-        print(e)
 
 
 if __name__ == "__main__":
