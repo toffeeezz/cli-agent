@@ -36,6 +36,7 @@ def main():
     print(CONFIG_PATH.exists())
 
     if not CONFIG_PATH.exists():
+        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)  # [ame] ensure saves/ dir exists before writing
         config = Config()  # [ame] single config instance for the whole app
         with open(CONFIG_PATH, "w") as file:
             _ = file.write(config.model_dump_json(indent=4))
