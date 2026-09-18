@@ -24,6 +24,12 @@ class AgentConfig(BaseModel):
     reasoning_effort: Literal["low", "medium", "high"] = "high"
 
 
+class GuiConfig(BaseModel):
+    theme: Literal["default", "dark", "light"] = "default"
+    camera_enabled_on_start: bool = True
+
+
 class Config(BaseModel):
     username: str = "John"
     agent: AgentConfig = AgentConfig()
+    gui: GuiConfig = GuiConfig()
