@@ -4,15 +4,25 @@ from typing import final
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
     QFileDialog,
+    QFormLayout,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
+from dotenv import set_key
 
+from modules.config.models import Config
 from modules.gui.webcam_panel import Webcam
 from modules.utils.qt_helper import scale_pixmap
 from modules.utils.resource import get_resource_fullpath
@@ -28,11 +38,14 @@ class LeftPanel(QWidget):
     settings_clicked: pyqtSignal = pyqtSignal()
     theme_clicked: pyqtSignal = pyqtSignal()
     about_clicked: pyqtSignal = pyqtSignal()
+    config_changed: pyqtSignal = pyqtSignal()
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, config: Config | None = None, parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("leftPanel")
         self.setMaximumWidth(400)
+
+        self.config = config or Config()
 
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)
@@ -70,7 +83,7 @@ class LeftPanel(QWidget):
             ("toggleCamera", "📷  Toggle Camera", self.toggle_camera_clicked),
             ("saveSession", "🔽️  Save Session", self._save_session),
             ("loadSession", "▶️  Load Session", self._load_session),
-            ("settingsBtn", "⚙️  Settings", self.settings_clicked),
+            ("settingsBtn", "⚙️  Settings", self._show_settings),  # [ame] wired to popup
             ("themeBtn", "🎨  Change Theme", self.theme_clicked),
             ("aboutBtn", "ℹ️  About", self.about_clicked),
         ]
@@ -85,6 +98,87 @@ class LeftPanel(QWidget):
         layout.addStretch(1)
 
         self.setLayout(layout)
+
+    # [ame] settings popup — reads/writes self.config directly
+    def _show_settings(self) -> None:
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Settings")
+        dialog.setMinimumWidth(400)
+
+        main_layout = QVBoxLayout(dialog)
+
+        form_layout = QFormLayout()
+        form_layout.setSpacing(8)
+
+        model_combo = QComboBox()
+        model_combo.addItems(
+            [
+                "deepseek/deepseek-v4-flash",
+                "deepseek/deepseek-v4.1-flash",
+            ]
+        )
+        model_combo.setCurrentText(self.config.agent.model)
+        form_layout.addRow("Model:", model_combo)
+
+        backend_combo = QComboBox()
+        backend_combo.addItems(["proxy", "koboldcpp"])
+        backend_combo.setCurrentText(self.config.agent.backend)
+        form_layout.addRow("Backend:", backend_combo)
+
+        temp_float = QDoubleSpinBox()
+        temp_float.setRange(0.0, 2.0)
+        temp_float.setSingleStep(0.1)
+        temp_float.setValue(self.config.agent.temperature)
+        form_layout.addRow("Temperature:", temp_float)
+
+        api_key_input = QLineEdit()
+        api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        api_key_input.setText(self.config.agent.api_key)
+        form_layout.addRow("API Key:", api_key_input)
+
+        # --- UI section ---
+        theme_combo = QComboBox()
+        theme_combo.addItems(["default", "dark", "light"])
+        theme_combo.setCurrentText(self.config.gui.theme)
+        form_layout.addRow("Theme:", theme_combo)
+
+        camera_check = QCheckBox("Enable camera on startup")
+        camera_check.setChecked(self.config.gui.camera_enabled_on_start)
+        form_layout.addRow("", camera_check)
+
+        loop_spin = QSpinBox()
+        loop_spin.setRange(1, 200)
+        loop_spin.setValue(self.config.agent.max_loops)
+        form_layout.addRow("Max Loops:", loop_spin)
+
+        main_layout.addLayout(form_layout)
+
+        # --- Buttons ---
+        btn_layout = QHBoxLayout()
+
+        def save():
+            self.config.agent.model = model_combo.currentText()
+            self.config.agent.backend = backend_combo.currentText()
+            self.config.agent.temperature = temp_float.value()
+            self.config.agent.api_key = api_key_input.text()
+            self.config.gui.theme = theme_combo.currentText()
+            self.config.gui.camera_enabled_on_start = camera_check.isChecked()
+            self.config.agent.max_loops = loop_spin.value()
+            _ = set_key("../../../.env", "api_key", self.config.agent.api_key)
+            self.config_changed.emit()
+            dialog.accept()
+
+        save_btn = QPushButton("Save")
+        save_btn.clicked.connect(save)
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(dialog.reject)
+        btn_layout.addStretch()
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(cancel_btn)
+
+        main_layout.addLayout(btn_layout)
+
+        _ = dialog.exec()
 
     def _load_session(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
